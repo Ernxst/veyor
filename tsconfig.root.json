@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": ["@forge/tsconfig", "@forge/tsconfig/node"],
+  "compilerOptions": {
+    "composite": true
+  },
+  "files": ["oxlint.config.mts"]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@forge/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./tsconfig.base.json",
+    "./build": "./tsconfig.build.json",
+    "./node": "./tsconfig.node.json",
+    "./package": "./tsconfig.package.json"
+  },
+  "scripts": {
+    "build": "publint"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "publint": "0.3.22"
+  },
+  "peerDependencies": {
+    "typescript": "7.0.2"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": false
+    }
+  }
+}

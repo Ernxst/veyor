@@ -1,0 +1,88 @@
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "tasks": {
+    "//#dts:root": {
+      "description": "Generate declaration files for the root TypeScript project."
+    },
+    "//#fmt": {
+      "cache": false,
+      "description": "Format repository files with Oxfmt."
+    },
+    "//#fmt:check": {
+      "description": "Check repository formatting with Oxfmt."
+    },
+    "//#knip": {
+      "description": "Find unused files, dependencies, and exports."
+    },
+    "//#lint": {
+      "description": "Lint repository source with Oxlint."
+    },
+    "//#lint:dependencies": {
+      "description": "Check workspace dependency versions and protocols with Syncpack."
+    },
+    "//#lint:fix": {
+      "cache": false,
+      "dependsOn": ["//#fmt"],
+      "description": "Automatically fix repository lint findings with Oxlint."
+    },
+    "//#lint:monorepo": {
+      "description": "Check monorepo package and dependency consistency with Sherif."
+    },
+    "//#postinstall:root": {
+      "description": "Run repository-level postinstall tasks."
+    },
+    "//#typecheck:root": {
+      "description": "Type-check the root TypeScript project."
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".output/**"],
+      "description": "Build workspace packages and applications in dependency order."
+    },
+    "check": {
+      "dependsOn": [
+        "build",
+        "dts",
+        "test",
+        "typecheck",
+        "//#dts:root",
+        "//#fmt:check",
+        "//#knip",
+        "//#lint",
+        "//#lint:dependencies",
+        "//#lint:monorepo",
+        "//#typecheck:root"
+      ],
+      "description": "Run all repository checks."
+    },
+    "check:fix": {
+      "cache": false,
+      "dependsOn": ["//#fmt", "//#lint:fix"],
+      "description": "Apply all available repository check fixes."
+    },
+    "dts": {
+      "dependsOn": ["^dts"],
+      "outputs": ["dist/**"],
+      "description": "Generate workspace declaration files in dependency order."
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "description": "Run persistent development servers for workspace packages."
+    },
+    "postinstall": {
+      "description": "Run package postinstall tasks."
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "description": "Run workspace tests in dependency order."
+    },
+    "test:coverage": {
+      "outputs": ["coverage/**"],
+      "description": "Run tests with coverage collection without caching."
+    },
+    "typecheck": {
+      "description": "Type-check workspace packages in dependency order."
+    }
+  }
+}

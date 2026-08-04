@@ -1,0 +1,64 @@
+labels:
+  - name: bug
+    color: d73a4a
+    description: Something is broken or behaving incorrectly.
+  - name: documentation
+    color: 0075ca
+    description: Improvements or additions to documentation.
+  - name: duplicate
+    color: cfd3d7
+    description: This issue or pull request already exists.
+  - name: enhancement
+    color: a2eeef
+    description: New feature or request.
+  - name: help wanted
+    color: 008672
+    description: Extra attention is needed.
+  - name: good first issue
+    color: 7057ff
+    description: Good for newcomers.
+  - name: invalid
+    color: e4e669
+    description: This does not seem right.
+  - name: question
+    color: d876e3
+    description: Further information is requested.
+  - name: wontfix
+    color: ffffff
+    description: This will not be worked on.
+  - name: reuse
+    color: cfd3d7
+    description: Consolidate duplication or reuse existing code.
+  - name: perf
+    color: fbca04
+    description: Performance or efficiency.
+  - name: simplify
+    color: c5def5
+    description: Reduce complexity without behaviour change.
+  - name: a11y
+    color: 5319e7
+    description: Accessibility.
+  - name: structure
+    color: 0e8a16
+    description: File organisation or conventions.
+  - name: test-infra
+    color: bfdadc
+    description: Testing infrastructure or conventions.
+  - name: epic
+    color: 6f42c1
+    description: Large multi-issue initiative.
+  - name: deferred
+    color: ededed
+    description: Backlog or not scheduled yet.
+  - name: observability
+    color: 006b75
+    description: Logging, tracing, metrics, or error reporting.
+  - name: ready-for-agent
+    color: 0e8a16
+    description: Fully specified and executable without further human input.
+  - name: ready-for-human
+    color: 5319e7
+    description: Awaiting human judgement, access, direction, or manual validation.
+  - name: blocked
+    color: b60205
+    description: Waiting for a named dependency or condition.

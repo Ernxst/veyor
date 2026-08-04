@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "webpro.vscode-knip",
+    "oxc.oxc-vscode",
+    "vitest.explorer",
+    "redhat.vscode-yaml",
+    "vercel.turbo-vsc",
+    "nautigsam.go-to-test"
+  ]
+}

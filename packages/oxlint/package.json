@@ -1,0 +1,35 @@
+{
+  "name": "@forge/oxlint",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/base.mts",
+    "./jsdoc": "./src/jsdoc.mts",
+    "./package-boundaries": "./src/package-boundaries.mts",
+    "./style": "./src/style.mts",
+    "./typescript": "./src/typescript.mts",
+    "./vitest": "./src/vitest.mts",
+    "./plugins/package-boundaries": "./src/plugins/package-boundaries.mts",
+    "./plugins/style": "./src/plugins/style.mts",
+    "./plugins/vitest": "./src/plugins/vitest.mts"
+  },
+  "scripts": {
+    "------------------------------------------------------------------------------": "",
+    "build": "publint",
+    "-------------------------------------------------------------------------------": "",
+    "typecheck": "tsc -b --noEmit",
+    "--------------------------------------------------------------------------------": "",
+    "test": "vitest run",
+    "test:watch": "vitest run --watch",
+    "---------------------------------------------------------------------------------": ""
+  },
+  "devDependencies": {
+    "@forge/tsconfig": "workspace:*",
+    "publint": "0.3.22",
+    "typescript": "7.0.2"
+  }
+}

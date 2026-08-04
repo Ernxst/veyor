@@ -1,0 +1,76 @@
+name: Feature request
+description: Suggest an idea for this project
+title: "feat: "
+labels: ["enhancement", "ready-for-human"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The best feature request comes with a pull request. The second best comes with a clear spec and no entitlement.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What can't you do right now? Be specific.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution
+      description: Concrete API, UI, or behavior. If it involves a new dependency, argue why it's necessary.
+    validations:
+      required: true
+  - type: textarea
+    id: observable
+    attributes:
+      label: Observable success
+      description: What must be observed to prove the requested behavior is complete?
+    validations:
+      required: true
+  - type: dropdown
+    id: verification
+    attributes:
+      label: Verification layer
+      description: Which evidence is required? Select every applicable layer.
+      multiple: true
+      options:
+        - Static, configuration, or build check
+        - Automated logic test
+        - Browser interaction
+        - Visual observation
+        - Performance measurement
+        - Human validation
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Name blocking issues, access, data, or decisions. Write "None" when unblocked.
+    validations:
+      required: true
+  - type: dropdown
+    id: human-input
+    attributes:
+      label: Human input
+      description: Does completion require human judgement, access, direction, or manual validation?
+      options:
+        - Required
+        - Not required
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: What else could solve the same problem without changing the codebase?
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, mockups, prior art — anything that makes the request clearer.
+    validations:
+      required: false

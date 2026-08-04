@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/syncpack/schema.json",
+  "semverGroups": [
+    {
+      "dependencies": ["**"],
+      "dependencyTypes": ["prod", "dev", "peer", "overrides", "pnpmOverrides", "resolutions"],
+      "label": "Pin dependency versions",
+      "range": ""
+    }
+  ]
+}

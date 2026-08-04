@@ -1,0 +1,81 @@
+name: Bug report
+description: Something is broken
+title: "bug: "
+labels: ["bug", "ready-for-human"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every bug report that can't be reproduced is a ghost. Leave a trail.
+  - type: textarea
+    id: describe
+    attributes:
+      label: Describe the bug
+      description: What happened, what did you expect, and why is the difference a problem?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To reproduce
+      description: Steps, input file (if applicable), and browser/OS.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, OS, `node --version`, and `bun --version`.
+      placeholder: "Chrome 138 / macOS 15 / Node 26 / bun 1.3.14"
+    validations:
+      required: true
+  - type: textarea
+    id: observable
+    attributes:
+      label: Observable success
+      description: What must be observed to prove this bug is resolved?
+    validations:
+      required: true
+  - type: dropdown
+    id: verification
+    attributes:
+      label: Verification layer
+      description: Which evidence is required? Select every applicable layer.
+      multiple: true
+      options:
+        - Static, configuration, or build check
+        - Automated logic test
+        - Browser interaction
+        - Visual observation
+        - Performance measurement
+        - Human validation
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Name blocking issues, access, data, or decisions. Write "None" when unblocked.
+    validations:
+      required: true
+  - type: dropdown
+    id: human-input
+    attributes:
+      label: Human input
+      description: Does completion require human judgement, access, direction, or manual validation?
+      options:
+        - Required
+        - Not required
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, console errors, relevant issue links — anything that helps.
+    validations:
+      required: false

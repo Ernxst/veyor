@@ -1,0 +1,88 @@
+name: Agent task
+description: Define a bounded implementation task that can become ready for an agent
+title: "task: "
+labels: ["enhancement", "ready-for-human"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for one bounded implementation task, not an epic or unresolved product decision. Triage replaces `ready-for-human` with `ready-for-agent` only when the task needs no further human input.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: State the concrete behavior or repository state this task must produce.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Current evidence
+      description: Show the observed behavior, failing output, rendered state, or code boundary that establishes the need for this task.
+    validations:
+      required: true
+  - type: textarea
+    id: observable-success
+    attributes:
+      label: Observable success
+      description: List the observations that will prove the outcome is complete.
+      placeholder: |
+        - The affected boundary ...
+        - The existing behavior ...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Owned boundaries
+      description: Name the files, modules, workflows, or interfaces this task may change. State explicit exclusions where overlap is likely.
+      placeholder: |
+        In scope:
+        - src/...
+
+        Out of scope:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: invariants
+    attributes:
+      label: Preserve
+      description: List existing behavior, capabilities, data contracts, compatibility, or evidence that must remain unchanged. Write "None" only when nothing adjacent needs preservation.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Name blocking issues, pull requests, access, data, or decisions. Write "None" when unblocked.
+    validations:
+      required: true
+  - type: dropdown
+    id: human-input
+    attributes:
+      label: Human input
+      description: Does completion require human judgement, access, direction, approval, or manual validation?
+      options:
+        - Required
+        - Not required
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Narrow verification
+      description: Give the smallest commands and observations that directly prove this task's outcome. Include rendered or measured evidence when static checks are insufficient.
+      placeholder: |
+        - bun run test
+        - bun run typecheck
+        - Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: completion-evidence
+    attributes:
+      label: Completion evidence
+      description: State what must be attached or recorded on the pull request, such as the exact SHA, command results, screenshots, recordings, or measurements.
+    validations:
+      required: true

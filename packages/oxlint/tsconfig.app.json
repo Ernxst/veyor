@@ -1,0 +1,7 @@
+{
+  "extends": ["@forge/tsconfig", "@forge/tsconfig/node", "@forge/tsconfig/package"],
+  "compilerOptions": {
+    "allowJs": false
+  },
+  "include": ["src/**/*.mts", "test"]
+}

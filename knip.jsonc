@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/knip/schema-jsonc.json",
+  "treatConfigHintsAsErrors": true,
+  "workspaces": {
+    ".": {
+      "entry": ["oxlint.config.mts"],
+      "ignoreDependencies": [
+        "eslint-plugin-turbo",
+        "oxlint-plugin-complexity",
+        "@vitest/eslint-plugin",
+      ],
+    },
+  },
+}

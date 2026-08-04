@@ -1,0 +1,80 @@
+assert_lefthook_installed: true
+glob_matcher: doublestar
+min_version: 2.1.6
+
+commit-msg:
+  commands:
+    "lint commit message":
+      run: bun commitlint --edit {1}
+
+pre-commit:
+  jobs:
+    - name: format staged files
+      run: bun oxfmt --write {staged_files}
+      glob: "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx,json,jsonc,md}"
+      stage_fixed: true
+
+    - name: lint staged code
+      run: bun oxlint --fix {staged_files}
+      # oxlint only lints JS/TS; passing it package.json/tsconfig (the only
+      # staged file in a config-only commit) makes it exit 1 ("No files found
+      # to lint"). Scope the trigger to code files so config-only commits skip.
+      glob: "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
+      stage_fixed: true
+
+    - name: declaration files
+      group:
+        jobs:
+          - name: dts
+            run: bun run dts --continue
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
+              - "**/*.{json,jsonc}"
+              - "bun.lock"
+
+    - name: validation checks
+      group:
+        parallel: true
+        jobs:
+          - name: build
+            run: bun run build --continue
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
+              - "**/*.{json,jsonc}"
+              - "bun.lock"
+
+          - name: knip
+            run: bun run knip
+            glob:
+              - "**/package.json"
+              - "bun.lock"
+              - "knip.jsonc"
+              - "**/tsconfig*.json"
+              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
+
+          - name: lint-dependencies
+            run: bun run lint:dependencies
+            glob:
+              - "**/package.json"
+              - "bun.lock"
+              - ".syncpackrc.json"
+
+          - name: lint-monorepo
+            run: bun run lint:monorepo
+            glob:
+              - "**/package.json"
+              - "bun.lock"
+
+          - name: test
+            run: bun run test --continue
+            glob:
+              - "**/package.json"
+              - "bun.lock"
+              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx,json,jsonc}"
+
+          - name: typecheck
+            run: bun run typecheck --continue
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
+              - "**/*.{json,jsonc}"
+              - "bun.lock"

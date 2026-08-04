@@ -1,0 +1,21 @@
+# Operating system
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+.turbo/
+dist/
+
+# Test artifacts
+coverage/
+
+# Local environment
+*.local
+.env
+.env.*
+!.env.example
+
+#
+.agents/references
