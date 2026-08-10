@@ -64,9 +64,7 @@ export function opencode<A extends Actor.Any>(
             .filter(Boolean)
             .join("\n\n");
 
-          const args = ["run", "--model", model];
-          if (options.agent !== undefined) args.push("--agent", options.agent);
-          args.push(prompt);
+          const args = buildOpencodeArgs(model, options, prompt);
 
           // opencode merges piped stdin into the prompt and waits for EOF, so
           // an open stdin pipe would hang the run — close it explicitly.
@@ -103,6 +101,23 @@ export function opencode<A extends Actor.Any>(
       );
     },
   };
+}
+
+function buildOpencodeArgs(model: string, options: OpencodeOptions, prompt: string): string[] {
+  const flags: readonly (readonly [flag: string, value: string | undefined])[] = [
+    // opencode resolves its working directory itself and ignores the child
+    // process cwd — --dir is the sanctioned way to confine it.
+    ["--dir", options.cwd],
+    ["--agent", options.agent],
+  ];
+
+  return [
+    "run",
+    "--model",
+    model,
+    ...flags.flatMap(([flag, value]) => (value === undefined ? [] : [flag, value])),
+    prompt,
+  ];
 }
 
 /** Best-effort extraction of the response's JSON object from free-form output. */
