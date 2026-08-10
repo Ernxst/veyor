@@ -36,32 +36,18 @@ export const DeliveryBlueprint = machine({
     sink("abandoned"),
 
     // Planning produces the backlog. A replan amends it: integrated items are
-    // preserved, pending ones are replaced by the revised plan.
+    // preserved, pending ones are replaced by the revised plan. A caller that
+    // supplies a backlog up front — typically another agent — gets it adopted
+    // for free; the model planner only runs when there is planning to do.
     task(
       "plan",
+      assign(actors.PlanAdopter, {
+        when: ({ context }) => context.planVersion === 0 && context.backlog.length > 0,
+        ...planHooks({ metered: false }),
+      }),
       assign(actors.Planner, {
-        input: (context) => ({
-          prompt: context.input.prompt,
-          files: context.input.files,
-          decisions: context.decisions,
-          backlog: context.backlog,
-        }),
-        update: ({ context, output }) => {
-          const integrated = context.backlog.filter((item) => item.status === "integrated");
-          const keep = new Set(integrated.map((item) => item.id));
-          const planned = output.backlog
-            .filter((item) => !keep.has(item.id))
-            .map((item) => ({ ...item, status: "pending" as const }));
-
-          const { current: _offline, pendingQuestion: _parked, ...rest } = context;
-          return {
-            ...rest,
-            backlog: [...integrated, ...planned],
-            planVersion: context.planVersion + 1,
-            attempts: 0,
-            findings: [],
-          };
-        },
+        when: ({ context }) => context.planVersion > 0 || context.backlog.length === 0,
+        ...planHooks({ metered: true }),
       })
     ),
 
@@ -99,16 +85,24 @@ export const DeliveryBlueprint = machine({
     ),
 
     // Review is unconditional after implementation — the quality floor is a
-    // property of the graph, not a scheduling decision.
+    // property of the graph, not a scheduling decision. What scales with the
+    // stakes is the reviewer: trivial low-risk items get the deterministic
+    // quality gate (unmetered), standard items a light model, high-risk items
+    // an adversarial cross-vendor review.
     task(
       "review",
+      assign(actors.GateReviewer, {
+        when: ({ context }) => gateTier(currentItem(context)),
+        ...reviewHooks({ metered: false }),
+      }),
       assign(actors.Reviewer, {
-        when: ({ context }) => currentItem(context).risk !== "high",
-        ...reviewHooks(),
+        when: ({ context }) =>
+          !gateTier(currentItem(context)) && currentItem(context).risk !== "high",
+        ...reviewHooks({ metered: true }),
       }),
       assign(actors.AdversarialReviewer, {
         when: ({ context }) => currentItem(context).risk === "high",
-        ...reviewHooks(),
+        ...reviewHooks({ metered: true }),
       })
     ),
 
@@ -140,10 +134,16 @@ export const DeliveryBlueprint = machine({
       })
     ),
 
-    // Verification runs once, when the backlog is exhausted.
+    // Verification runs once, when the backlog is exhausted. Its floor is the
+    // quality gate: a delivery whose every item was gate-reviewed is gate-verified.
     task(
       "verify",
+      assign(actors.GateVerifier, {
+        when: ({ context }) => context.backlog.every(gateTier),
+        input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
+      }),
       assign(actors.Verifier, {
+        when: ({ context }) => !context.backlog.every(gateTier),
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
         update: ({ context, output }) =>
           output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
@@ -216,14 +216,18 @@ export const DeliveryBlueprint = machine({
       })
     ),
 
-    // Acceptance is the human authority boundary at the end of the line.
+    // Acceptance is the authority boundary at the end of the line — held by a
+    // terminal human, a calling agent, or policy, depending on the assembly.
+    // A fully gate-tier delivery that passed verification self-accepts.
     task(
       "accept",
+      assign(actors.AutoAcceptance, {
+        when: ({ context }) => context.backlog.every(gateTier),
+        input: acceptanceInput,
+      }),
       assign(actors.Acceptance, {
-        input: (context) => ({
-          summary: `All ${context.backlog.length} backlog items are integrated and verification passed for "${context.input.prompt}".`,
-          backlog: context.backlog,
-        }),
+        when: ({ context }) => !context.backlog.every(gateTier),
+        input: acceptanceInput,
       })
     ),
   ],
@@ -294,14 +298,65 @@ function implementationHooks() {
   };
 }
 
-function reviewHooks() {
+/** Items whose review floor is the deterministic quality gate. */
+function gateTier(item: Schema.Item): boolean {
+  return item.complexity === "trivial" && item.risk === "low";
+}
+
+function acceptanceInput(context: Schema.Context) {
+  return {
+    summary: `All ${context.backlog.length} backlog items are integrated and verification passed for "${context.input.prompt}".`,
+    backlog: context.backlog,
+  };
+}
+
+/** Spend meters model-grade work; adopting a caller-supplied backlog is free. */
+function planHooks({ metered }: { metered: boolean }) {
+  return {
+    input: (context: Schema.Context) => ({
+      prompt: context.input.prompt,
+      files: context.input.files,
+      decisions: context.decisions,
+      backlog: context.backlog,
+    }),
+    update: ({
+      context,
+      output,
+    }: {
+      context: Schema.Context;
+      output: { outcome: "planned"; backlog: readonly Schema.PlannedItem[] };
+    }) => {
+      const integrated = context.backlog.filter((item) => item.status === "integrated");
+      const keep = new Set(integrated.map((item) => item.id));
+      const planned = output.backlog
+        .filter((item) => !keep.has(item.id))
+        .map((item) => ({ ...item, status: "pending" as const }));
+
+      const {
+        current: _offline,
+        pendingQuestion: _parked,
+        ...rest
+      } = metered ? charge(context) : context;
+      return {
+        ...rest,
+        backlog: [...integrated, ...planned],
+        planVersion: context.planVersion + 1,
+        attempts: 0,
+        findings: [],
+      };
+    },
+  };
+}
+
+/** Spend meters model-grade work; a deterministic gate review is free. */
+function reviewHooks({ metered }: { metered: boolean }) {
   return {
     input: (context: Schema.Context) => {
       const item = currentItem(context);
       return { item, summary: `Work delivered for "${item.objective}"` };
     },
     update: ({ context, output }: { context: Schema.Context; output: Schema.ReviewOutput }) => {
-      const charged = charge(context);
+      const charged = metered ? charge(context) : context;
       if (output.outcome === "approved") {
         return {
           ...charged,

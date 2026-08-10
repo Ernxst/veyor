@@ -1,6 +1,6 @@
 import { claude } from "@forge/anthropic/claude";
 import { assemble } from "@forge/core";
-import { acceptance, prompt, question, review } from "@forge/core/actors";
+import { acceptance, deterministic, prompt, question, review } from "@forge/core/actors";
 import { codex } from "@forge/openai/codex";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../machine.ts";
@@ -24,14 +24,19 @@ export default assemble(
     instructions: `
 Investigate the task and repository evidence, then decompose the work into a backlog of
 independent items with explicit acceptance criteria, dependencies, complexity, and risk.
+Do not emit an item smaller than its ceremony: batch related trivial changes into one item.
 On a replan, preserve the intent of integrated items and revise only what the evidence
 invalidates. Do not implement, review, or claim completion.
 `,
   }),
 
-  // Scheduling and integration are deterministic policy, not judgment.
+  // Scheduling, integration, and the free floors of planning, verification,
+  // and acceptance are deterministic policy, not judgment.
+  policy.PlanAdopter,
   policy.Selector,
   policy.Integrator,
+  policy.GateVerifier,
+  policy.AutoAcceptance,
 
   // Execution: harder items and repeated failure escalate to more capable workers.
   codex(actors.TrivialImplementer, "gpt-5.3-spark", {
@@ -47,9 +52,15 @@ invalidates. Do not implement, review, or claim completion.
     instructions: implementerInstructions,
   }),
 
-  // Independent evaluation — a different vendor than the implementers, so the
-  // review does not share the implementation model's blind spots.
-  claude(actors.Reviewer, "claude-opus-5", {
+  // Independent evaluation — the reviewer scales with the stakes. Trivial
+  // low-risk items get the deterministic quality gate (a real delivery
+  // factory shells out to the repository's own checks here); standard items
+  // a light model; high-risk items an adversarial cross-vendor review.
+  deterministic(actors.GateReviewer, ({ input }) => ({
+    outcome: "approved" as const,
+    notes: `Quality gate passed for "${input.item.id}".`,
+  })),
+  claude(actors.Reviewer, "claude-haiku-4-5", {
     effort: "high",
     permissionMode: "dontAsk",
     instructions: `

@@ -9,6 +9,13 @@ export const Planner = actor("planner", {
   context: Schema.Context,
 });
 
+export const PlanAdopter = actor("planAdopter", {
+  input: schema(Schema.PlanRequest),
+  output: schema(Schema.Plan),
+  aggregate: schema(Schema.TaskAggregate),
+  context: Schema.Context,
+});
+
 export const Selector = actor("selector", {
   input: schema(Schema.SelectRequest),
   output: schema(Schema.Selection),
@@ -33,6 +40,13 @@ export const Implementer = actor("implementer", {
 export const SeniorImplementer = actor("seniorImplementer", {
   input: schema(Schema.ImplementationAssignment),
   output: schema(Schema.ImplementationOutput),
+  aggregate: schema(Schema.TaskAggregate),
+  context: Schema.Context,
+});
+
+export const GateReviewer = actor("gateReviewer", {
+  input: schema(Schema.ReviewAssignment),
+  output: schema(Schema.ReviewOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });
@@ -65,6 +79,13 @@ export const Integrator = actor("integrator", {
   context: Schema.Context,
 });
 
+export const GateVerifier = actor("gateVerifier", {
+  input: schema(Schema.VerificationRequest),
+  output: schema(Schema.VerificationOutput),
+  aggregate: schema(Schema.TaskAggregate),
+  context: Schema.Context,
+});
+
 export const Verifier = actor("verifier", {
   input: schema(Schema.VerificationRequest),
   output: schema(Schema.VerificationOutput),
@@ -89,6 +110,13 @@ export const AskUserQuestion = actor("askUserQuestion", {
 export const UserReview = actor("userReview", {
   input: schema(Schema.UserReviewInput),
   output: schema(Schema.UserReviewOutput),
+  aggregate: schema(Schema.TaskAggregate),
+  context: Schema.Context,
+});
+
+export const AutoAcceptance = actor("autoAcceptance", {
+  input: schema(Schema.AcceptanceRequest),
+  output: schema(Schema.AcceptanceOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });

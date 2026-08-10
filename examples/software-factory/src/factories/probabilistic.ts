@@ -37,8 +37,11 @@ export default function factory(seed: number) {
     })),
 
     // Deterministic policy shared with the LLM factory
+    policy.PlanAdopter,
     policy.Selector,
     policy.Integrator,
+    policy.GateVerifier,
+    policy.AutoAcceptance,
 
     // Workers
     probabilistic(actors.TrivialImplementer, {
@@ -55,6 +58,12 @@ export default function factory(seed: number) {
       seed: seed + 3,
       failureRate: 0.03,
       outcomes: { implemented: 0.95, blocked: 0.03, contradiction: 0.02 },
+    }),
+    // The gate tier models the deterministic quality gate: cheap, consistent,
+    // occasionally failing checks. Model reviewers carry judgment and stickiness.
+    probabilistic(actors.GateReviewer, {
+      seed: seed + 12,
+      outcomes: { approved: 0.93, changesRequested: 0.07 },
     }),
     probabilistic(actors.Reviewer, {
       seed: seed + 4,

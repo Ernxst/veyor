@@ -55,12 +55,13 @@ stateDiagram-v2
 The design rests on a handful of commitments:
 
 - **LLM judgment is spent only where judgment exists.** Planning, implementing, reviewing, refining, verifying, and triage are model calls. Scheduling (`select`) and integration are deterministic policy in [`src/factories/policy.ts`](./src/factories/policy.ts) — picking the next ready backlog item is not a judgment call, so no tokens are spent on it.
-- **Quality is a property of the graph.** Review is unconditional after every implementation. No scheduler — model or otherwise — can skip it, and nothing needs a prompt to enforce it.
+- **Quality is a property of the graph; its cost scales with the stakes.** Review is unconditional after every implementation — no scheduler can skip it — but the reviewer tiers: trivial low-risk items get the deterministic quality gate (free), standard items a light model, high-risk items an adversarial cross-vendor review.
 - **Loops are bounded by the machine.** The refine loop carries a guard (`attempts < 3`); its exhaustion is not an error but _evidence_, routed to triage. Endless review is unrepresentable.
 - **Policy lives on edges, not stations.** The spend budget is a guarded transition out of `select` with a human fallback, not a task on the line. Stall detection dissolved into the refine bound entirely.
 - **Friction is ambient, discretion is not.** Any working actor can report `blocked` (a question for the user) or `contradiction` (the work conflicts with the plan). Escape hatches are always reachable as _outcomes_, but never offered to a scheduler as _choices_.
 - **Replanning is a funnel, not a whim.** Evidence of model-wrongness — refine exhaustion, contradictions, verification failure, an inconsistent backlog — drains into `triage`, which classifies once: fix one item, replan, or escalate to the human. A replan **amends** the backlog; integrated work is preserved.
-- **Humans hold three boundaries:** questions (`ask-user`), funding and continuation (`user-review`), and final acceptance (`accept`). Answers persist as `decisions` that every later task reads.
+- **Every station has a free floor.** Planning adopts a caller-supplied backlog without a model call; verification and acceptance drop to the gate and to policy when every item is gate-tier; scheduling and integration are always deterministic. The degenerate case — a caller (typically another agent) handing over one trivial item — costs exactly **one** model-grade call: zero overhead over asking an LLM directly. Spend meters model-grade work only, so the budget is a true token proxy.
+- **Authority boundaries, not human boundaries:** questions (`ask-user`), funding and continuation (`user-review`), and final acceptance (`accept`) are held by whoever assembles them — a terminal human here, the calling agent in an agent-to-agent assembly, or policy for gate-tier deliveries. Answers persist as `decisions` that every later task reads.
 
 ## What this architecture is best for
 
@@ -87,7 +88,7 @@ Run the Monte Carlo:
 bun run simulate
 ```
 
-At 10,000 seeded runs with a budget of 25 work units: **92% delivered**, ~8% abandoned, a mean spend of ~20, ~5.9 of 6 items integrated, and ~0.4 replans per run. The budget is a visible lever: most abandonment at budget 25 is the spend gate converting overrun tail-risk into human decisions — at budget 35 abandonment drops to ~3% while mean spend stays ~20, showing the demand is ~20 with a refine-variance tail rather than runaway cost.
+At 10,000 seeded runs with a budget of 25 model-grade work units: **~94% delivered**, ~6% abandoned, a mean spend of ~18, ~5.9 of 6 items integrated, and ~0.4 replans per run. The budget is a visible lever: most abandonment at budget 25 is the spend gate converting overrun tail-risk into human decisions — at budget 35 abandonment drops to ~2% while mean spend stays ~18, showing the demand is bounded with a refine-variance tail rather than runaway cost. The script also prints the degenerate case: a caller-supplied trivial item delivers at a spend of exactly 1.
 
 ### LLM assembly
 

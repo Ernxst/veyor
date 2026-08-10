@@ -61,3 +61,31 @@ if (finished > 0) {
 function percent(count: number): string {
   return `${((100 * count) / RUNS).toFixed(1).padStart(5)}%`;
 }
+
+// The degenerate case: a caller (typically another agent) supplies one trivial
+// item. Planning adopts it, review and verification run on the free gate tier,
+// and acceptance is automatic — the whole run costs one model-grade work unit,
+// zero overhead over asking an LLM directly.
+const degenerate = await factory(1)
+  .run({
+    ...context,
+    backlog: [
+      {
+        id: "fix-typo",
+        objective: "Fix the typo in the README",
+        acceptanceCriteria: ["typo is gone"],
+        dependsOn: [],
+        complexity: "trivial",
+        risk: "low",
+        status: "pending",
+      },
+    ],
+  })
+  .catch(() => undefined);
+
+if (degenerate !== undefined) {
+  console.log(
+    `\n  degenerate case (caller-supplied trivial item): ${degenerate.task}, ` +
+      `spend ${degenerate.context.spend} model-grade unit(s)`
+  );
+}
