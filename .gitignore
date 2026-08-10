@@ -7,6 +7,7 @@ node_modules/
 # Build artifacts
 .turbo/
 dist/
+dump/
 
 # Test artifacts
 coverage/

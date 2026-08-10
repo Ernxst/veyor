@@ -14,22 +14,23 @@
   "[typescript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-  "cSpell.words": ["knip", "oxfmt", "oxlint", "oxlintrc", "sherif", "turborepo", "vitest"],
+  "cSpell.words": [
+    "HITL",
+    "knip",
+    "oxfmt",
+    "oxlint",
+    "oxlintrc",
+    "sherif",
+    "turborepo",
+    "typebox",
+    "vitest"
+  ],
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "always"
   },
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.wordWrap": "wordWrapColumn",
   "editor.wordWrapColumn": 120,
-  "files.exclude": {
-    "**/.tanstack": true
-  },
-  "files.readonlyInclude": {
-    "**/routeTree.gen.ts": true
-  },
-  "files.watcherExclude": {
-    "**/routeTree.gen.ts": true
-  },
   "js/ts.experimental.useTsgo": true,
   "js/ts.preferences.autoImportSpecifierExcludeRegexes": ["^node:test$", "^bun:test$"],
   "js/ts.preferences.importModuleSpecifierEnding": "js",

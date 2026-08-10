@@ -1,5 +1,17 @@
 {
   "$schema": "./node_modules/syncpack/schema.json",
+  "versionGroups": [
+    {
+      "dependencies": ["effect", "@effect/platform-node"],
+      "dependencyTypes": ["peer", "prod"],
+      "isIgnored": true
+    },
+    {
+      "dependencies": ["$LOCAL"],
+      "dependencyTypes": ["peer"],
+      "isIgnored": true
+    }
+  ],
   "semverGroups": [
     {
       "dependencies": ["**"],

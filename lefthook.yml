@@ -22,16 +22,6 @@ pre-commit:
       glob: "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
       stage_fixed: true
 
-    - name: declaration files
-      group:
-        jobs:
-          - name: dts
-            run: bun run dts --continue
-            glob:
-              - "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
-              - "**/*.{json,jsonc}"
-              - "bun.lock"
-
     - name: validation checks
       group:
         parallel: true

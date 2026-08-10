@@ -9,13 +9,17 @@
   "exports": {
     ".": "./tsconfig.base.json",
     "./build": "./tsconfig.build.json",
+    "./effect": "./tsconfig.effect.json",
     "./node": "./tsconfig.node.json",
     "./package": "./tsconfig.package.json"
   },
   "scripts": {
-    "build": "publint"
+    "build": "publint",
+    "postinstall": "effect-tsgo patch"
   },
   "devDependencies": {
+    "@effect/language-service": "0.87.1",
+    "@effect/tsgo": "0.29.0",
     "@types/node": "26.1.2",
     "publint": "0.3.22"
   },

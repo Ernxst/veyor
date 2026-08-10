@@ -1,0 +1,221 @@
+diff --git a/node_modules/@ark/attest/.bun-tag-22af76b6c94ed516 b/.bun-tag-22af76b6c94ed516
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@ark/attest/.bun-tag-c577bbbad97f593a b/.bun-tag-c577bbbad97f593a
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@ark/attest/.bun-tag-e0aedb1d884ae4dd b/.bun-tag-e0aedb1d884ae4dd
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@ark/attest/.bun-tag-f723c3b1af5663d0 b/.bun-tag-f723c3b1af5663d0
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/out/bench/baseline.js b/out/bench/baseline.js
+index 97164e324a10f89c4bca073d80d4cccaa886db45..10bd59be35800441c1b64788372942815153fa54 100644
+--- a/out/bench/baseline.js
++++ b/out/bench/baseline.js
+@@ -4,6 +4,12 @@ import { throwAssertionError } from "../assert/assertions.js";
+ import { queueSnapshotUpdate, writeSnapshotUpdatesOnExit } from "../cache/snapshots.js";
+ import { stringifyMeasure } from "./measure.js";
+ export const queueBaselineUpdateIfNeeded = (updated, baseline, ctx) => {
++    if (!baseline && ctx.cfg.failOnMissingSnapshots && !ctx.cfg.updateSnapshots) {
++        throwAssertionError({
++            stack: ctx.assertionStack,
++            message: `Missing baseline for '${ctx.qualifiedName}'. Run with --updateSnapshots to establish it.`
++        });
++    }
+     // If we already have a baseline and the user didn't pass an update flag, do nothing
+     if (baseline && !ctx.cfg.updateSnapshots)
+         return;
+@@ -25,20 +31,20 @@ export const queueBaselineUpdateIfNeeded = (updated, baseline, ctx) => {
+ };
+ /** Pretty print comparison and set the process.exitCode to 1 if delta threshold is exceeded */
+ export const compareToBaseline = (result, ctx) => {
++    if (!result.baseline || ctx.cfg.updateSnapshots)
++        return;
++    const delta = ((result.updated[0] - result.baseline[0]) / result.baseline[0]) * 100;
+     console.log(`⛳ Result: ${stringifyMeasure(result.updated)}`);
+-    if (result.baseline && !ctx.cfg.updateSnapshots) {
+-        console.log(`🎯 Baseline: ${stringifyMeasure(result.baseline)}`);
+-        const delta = ((result.updated[0] - result.baseline[0]) / result.baseline[0]) * 100;
+-        const formattedDelta = `${delta.toFixed(2)}%`;
+-        if (delta > ctx.cfg.benchPercentThreshold)
+-            handlePositiveDelta(formattedDelta, ctx);
+-        else if (delta < -ctx.cfg.benchPercentThreshold)
+-            handleNegativeDelta(formattedDelta, ctx);
+-        else
+-            console.log(`📊 Delta: ${delta > 0 ? "+" : ""}${formattedDelta}`);
+-        // add an extra newline
+-        console.log();
+-    }
++    console.log(`🎯 Baseline: ${stringifyMeasure(result.baseline)}`);
++    const formattedDelta = `${delta.toFixed(2)}%`;
++    if (delta > ctx.cfg.benchPercentThreshold)
++        handlePositiveDelta(formattedDelta, ctx);
++    else if (delta < -ctx.cfg.benchPercentThreshold)
++        handleNegativeDelta(formattedDelta, ctx);
++    else
++        console.log(`📊 Delta: ${delta > 0 ? "+" : ""}${formattedDelta}`);
++    // add an extra newline
++    console.log();
+ };
+ const handlePositiveDelta = (formattedDelta, ctx) => {
+     const message = `'${ctx.qualifiedName}' exceeded baseline by ${formattedDelta} (threshold is ${ctx.cfg.benchPercentThreshold}%).`;
+diff --git a/out/bench/type.js b/out/bench/type.js
+index 070fa53ebac1eb4c600cae4d2c002808c27d06dc..e8f6ec56e3c3962449209ee23f5f9e6c8a608913 100644
+--- a/out/bench/type.js
++++ b/out/bench/type.js
+@@ -1,6 +1,6 @@
+ import { caller } from "@ark/fs";
+ import { throwInternalError } from "@ark/util";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ import { getBenchAssertionsAtPosition } from "../cache/getCachedAssertions.js";
+ import { TsServer, getAbsolutePosition, getAncestors, getDescendants, nearestCallExpressionChild } from "../cache/ts.js";
+ import { getCallExpressionsByName, getInstantiationsContributedByNode } from "../cache/utils.js";
+diff --git a/out/cache/ts.js b/out/cache/ts.js
+index 241930e96f240c6f99af404b85d8e4141328955a..f6460468fc958941352d5fd18ce2ee7786205bb0 100644
+--- a/out/cache/ts.js
++++ b/out/cache/ts.js
+@@ -3,7 +3,7 @@ import { printable, throwError, throwInternalError } from "@ark/util";
+ import * as tsvfs from "@typescript/vfs";
+ import { readFileSync } from "node:fs";
+ import { resolve, dirname, join } from "node:path";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ import { getConfig } from "../config.js";
+ export class TsServer {
+     rootFiles;
+@@ -29,7 +29,7 @@ export class TsServer {
+             const contents = readFile(path).trim();
+             return contents !== "";
+         });
+-        const system = tsvfs.createFSBackedSystem(tsLibPaths.defaultMapFromNodeModules, this.tsConfigInfo.path ? dirname(this.tsConfigInfo.path) : fromCwd(), ts);
++        const system = tsvfs.createFSBackedSystem(tsLibPaths.defaultMapFromNodeModules, this.tsConfigInfo.path ? dirname(this.tsConfigInfo.path) : fromCwd(), ts, tsLibPaths.libPath);
+         this.virtualEnv = tsvfs.createVirtualTypeScriptEnvironment(system, this.rootFiles, ts, this.tsConfigInfo.parsed.options);
+         this.program = this.virtualEnv.languageService.getProgram();
+         TsServer._instance = this;
+@@ -124,10 +124,11 @@ const defaultDiagnosticHost = {
+ const throwConfigParseError = (error) => throwError(ts.formatDiagnostics([error], defaultDiagnosticHost));
+ const throwConfigInstantiationError = (instantiatedConfig) => throwError(ts.formatDiagnostics(instantiatedConfig.errors, defaultDiagnosticHost));
+ export const getTsLibFiles = (tsconfigOptions) => {
+-    const defaultMapFromNodeModules = tsvfs.createDefaultMapFromNodeModules(tsconfigOptions);
+     const libPath = dirname(ts.getDefaultLibFilePath(tsconfigOptions));
++    const defaultMapFromNodeModules = tsvfs.createDefaultMapFromNodeModules(tsconfigOptions, ts, libPath);
+     return {
+         defaultMapFromNodeModules,
++        libPath,
+         resolvedPaths: [...defaultMapFromNodeModules.keys()].map(path => join(libPath, path))
+     };
+ };
+diff --git a/out/cache/utils.js b/out/cache/utils.js
+index e7deff1d23530ef4b489785f00a894bbf9505931..38d0cdc712ba930e90700ef7dae3bcd7c25c2fec 100644
+--- a/out/cache/utils.js
++++ b/out/cache/utils.js
+@@ -1,7 +1,7 @@
+ import { filePath } from "@ark/fs";
+ import { throwInternalError } from "@ark/util";
+ import * as tsvfs from "@typescript/vfs";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ import { getConfig } from "../config.js";
+ import { getFileKey } from "../utils.js";
+ import { getDescendants, getFirstAncestorByKindOrThrow, getProgram, getTsConfigInfoOrThrow, getTsLibFiles } from "./ts.js";
+@@ -74,7 +74,7 @@ export const getInstantiationsContributedByNode = (file, benchBlock) => {
+     const originalPath = filePath(file.fileName);
+     const fakePath = originalPath + ".nonexistent.ts";
+     const baselineFile = getBaselineSourceFile(file);
+-    const baselineFileWithBenchBlock = baselineFile + `\nconst $attestIsolatedBench = ${benchBlock.getFullText()}`;
++    const baselineFileWithBenchBlock = baselineFile + `\nconst $attestIsolatedBench = ${getNormalizedBenchBlockText(benchBlock)}`;
+     if (!instantiationsByPath[fakePath]) {
+         const instantiationsWithoutNode = getInstantiationsWithFile(baselineFile, fakePath);
+         instantiationsByPath[fakePath] = instantiationsWithoutNode;
+@@ -82,6 +82,18 @@ export const getInstantiationsContributedByNode = (file, benchBlock) => {
+     const instantiationsWithNode = getInstantiationsWithFile(baselineFileWithBenchBlock, fakePath);
+     return instantiationsWithNode - instantiationsByPath[fakePath];
+ };
++const getNormalizedBenchBlockText = (benchBlock) => {
++    const instantiationMethodCalls = getConfig().attestAliases.map(alias => `${alias}.instantiations`);
++    const calls = getCallExpressionsByName(benchBlock, instantiationMethodCalls).sort((left, right) => right.arguments.pos - left.arguments.pos);
++    const blockStart = benchBlock.getFullStart();
++    let text = benchBlock.getFullText();
++    for (const call of calls) {
++        const start = call.arguments.pos - blockStart;
++        const end = call.arguments.end - blockStart;
++        text = text.slice(0, start) + text.slice(end);
++    }
++    return text;
++};
+ export const createOrUpdateFile = (env, fileName, fileText) => {
+     if (env.sys.fileExists(fileName))
+         env.updateFile(fileName, fileText);
+diff --git a/out/cache/writeAssertionCache.js b/out/cache/writeAssertionCache.js
+index a8e1ccf1e8b082185cb43e11d5c83bffcc891e69..1599c4b731fde5d993b2b519be401ad69e3042bf 100644
+--- a/out/cache/writeAssertionCache.js
++++ b/out/cache/writeAssertionCache.js
+@@ -1,5 +1,5 @@
+ import { flatMorph } from "@ark/util";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ import { getConfig } from "../config.js";
+ import { getFileKey } from "../utils.js";
+ import { TsServer, extractArgumentTypesFromCall, getDescendants, getInternalTypeChecker } from "./ts.js";
+diff --git a/out/cli/trace.js b/out/cli/trace.js
+index 15d19f06e6606f2afe9658e012e7e0aff0860159..9c462af770e64fcc62bbfb7e0e9270c6d39504d1 100644
+--- a/out/cli/trace.js
++++ b/out/cli/trace.js
+@@ -1,7 +1,7 @@
+ import { ensureDir, getShellOutput, readJson, writeFile } from "@ark/fs";
+ import { existsSync } from "node:fs";
+ import { basename, join, relative, resolve } from "node:path";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ import { TsServer, getDescendants, getStringifiableType, nearestBoundingCallExpression } from "../cache/ts.js";
+ import { getConfig } from "../config.js";
+ import { baseDiagnosticTscCmd } from "./shared.js";
+diff --git a/out/config.js b/out/config.js
+index 1cfc8f398e45fadd9955fb3f4818e39565b1255d..053ade0e8b0083896078ac06f009832092e23270 100644
+--- a/out/config.js
++++ b/out/config.js
+@@ -111,7 +111,15 @@ export const getConfig = () => parseConfig();
+ // undefined and tries to call `getItem`:
+ // https://github.com/nodejs/node/issues/60303
+ // this can be removed once the bug is addressed in Node
+-if (!globalThis.localStorage?.getItem)
++const localStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
++if (localStorageDescriptor?.get) {
++    Object.defineProperty(globalThis, "localStorage", {
++        configurable: true,
++        value: undefined,
++        writable: true
++    });
++}
++else if (!globalThis.localStorage?.getItem)
+     globalThis.localStorage = undefined;
+ export const ensureCacheDirs = () => {
+     cachedConfig ??= getConfig();
+diff --git a/out/fixtures.js b/out/fixtures.js
+index 60114ad6182d078d2e079d6c99ce2427749aa8ba..7a4ef9c7aad7e380dac06510c04dc45300e53919 100644
+--- a/out/fixtures.js
++++ b/out/fixtures.js
+@@ -31,7 +31,6 @@ export const setup = (options) => {
+     return teardown;
+ };
+ export const writeAssertionData = (toPath) => {
+-    console.log("⏳ Waiting for TypeScript to check your project (this may take a while)...");
+     writeJson(toPath, analyzeProjectAssertions());
+ };
+ export const cleanup = () => writeSnapshotUpdatesOnExit();
+diff --git a/out/tsVersioning.js b/out/tsVersioning.js
+index 7c1226d1a7abc13c41aa11cf6fe8720f4c8c9296..493586dbd9191fb5cfc13e5cd60d53e551c03f6c 100644
+--- a/out/tsVersioning.js
++++ b/out/tsVersioning.js
+@@ -1,7 +1,7 @@
+ import { assertPackageRoot, findPackageAncestors, readJson } from "@ark/fs";
+ import { existsSync, readdirSync, renameSync, statSync, symlinkSync, unlinkSync } from "node:fs";
+ import { join } from "node:path";
+-import ts from "typescript";
++import ts from "typescript-attest";
+ /**
+  * Executes a provided function for an installed set of TypeScript versions.
+  *

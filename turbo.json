@@ -1,9 +1,6 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
   "tasks": {
-    "//#dts:root": {
-      "description": "Generate declaration files for the root TypeScript project."
-    },
     "//#fmt": {
       "cache": false,
       "description": "Format repository files with Oxfmt."
@@ -42,10 +39,8 @@
     "check": {
       "dependsOn": [
         "build",
-        "dts",
         "test",
         "typecheck",
-        "//#dts:root",
         "//#fmt:check",
         "//#knip",
         "//#lint",
@@ -59,11 +54,6 @@
       "cache": false,
       "dependsOn": ["//#fmt", "//#lint:fix"],
       "description": "Apply all available repository check fixes."
-    },
-    "dts": {
-      "dependsOn": ["^dts"],
-      "outputs": ["dist/**"],
-      "description": "Generate workspace declaration files in dependency order."
     },
     "dev": {
       "cache": false,
@@ -82,6 +72,7 @@
       "description": "Run tests with coverage collection without caching."
     },
     "typecheck": {
+      "dependsOn": ["^build"],
       "description": "Type-check workspace packages in dependency order."
     }
   }
