@@ -13,9 +13,8 @@ ambiguous in a way only the user can resolve, report blocked with the question; 
 conflicts with the plan, report a contradiction. Do not expand scope or certify completion.
 `;
 
-export default assemble(
-  DeliveryBlueprint,
-
+/** Every worker below the authority boundary, shared with the headless assembly. */
+export const workers = [
   // Planning owns the model of the work: a backlog of items with acceptance
   // criteria and dependencies. On a replan it receives the current backlog
   // and the accumulated decisions as evidence.
@@ -115,8 +114,12 @@ user-owned decision. Identify the earliest invalid assumption.
 Do not implement a fix or defend the current approach.
 `,
   }),
+] as const;
 
-  // Human authority boundaries
+// Attended assembly: a terminal human holds the authority boundaries.
+export default assemble(
+  DeliveryBlueprint,
+  ...workers,
   prompt(actors.AskUserQuestion, { format: question() }),
   prompt(actors.UserReview, { format: review() }),
   prompt(actors.Acceptance, { format: acceptance() })

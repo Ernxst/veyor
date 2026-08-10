@@ -100,6 +100,22 @@ At 10,000 seeded runs with a budget of 25 model-grade work units: **~97% deliver
 
 Both assemblies satisfy the same actor contracts and assemble the same `DeliveryBlueprint`.
 
+## Kicking it off
+
+One entry point serves both a human and an agent caller:
+
+```sh
+# Attended: you hold the authority boundaries at the terminal.
+bun run deliver "Ship the typed workflow runner" --budget 25
+
+# Unattended: policy holds them; the run never blocks.
+bun run deliver "Ship the typed workflow runner" --budget 25 --headless --backlog items.json
+```
+
+The headless assembly ([`src/factories/headless.ts`](./src/factories/headless.ts)) swaps the terminal prompts for policy: questions receive a standing conservative answer, budget exhaustion defers the sick item instead of asking for more money, and a verified delivery self-accepts. The script prints a JSON result — integrated and deferred items, spend, the decision log, and the review history — and exits nonzero unless the run ended `done`.
+
+An agent caller's loop is stateless re-runs: supply the decomposition via `--backlog` (adopted for free), read the result, answer whatever surfaced in `deferred` and the decision log, and re-run with `--decisions` pre-seeded. The re-run loop is the conversation — no IPC, no session state, no CLI beyond this script.
+
 ## Read the example
 
 Start in this order:
