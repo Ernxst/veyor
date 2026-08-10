@@ -23,7 +23,7 @@ const PlannedItem = Schema.Struct({
 /** A planned item once it is on the backlog, tracking delivery state. */
 const Item = Schema.Struct({
   ...PlannedItem.fields,
-  status: Schema.Literals(["pending", "integrated"]),
+  status: Schema.Literals(["pending", "integrated", "deferred"]),
 });
 
 const ReviewHistory = Schema.Array(
@@ -50,6 +50,10 @@ const ContextStruct = Schema.Struct({
   current: Schema.optional(Schema.String),
   /** Refine cycles consumed by the current item. */
   attempts: Schema.Number,
+  /** Model-grade spend consumed by the current item. */
+  itemSpend: Schema.Number,
+  /** Whether the current item has already been re-implemented from scratch. */
+  reworked: Schema.Boolean,
   /** Outstanding review findings against the current item. */
   findings: Schema.Array(Schema.String),
   /** A question raised by a blocked worker, awaiting the user. */
@@ -184,6 +188,12 @@ export const TriageOutput = Schema.Union([
     revisedObjective: Schema.String,
     reasoning: Schema.String,
   }),
+  Schema.Struct({
+    outcome: Schema.Literal("split"),
+    fragments: Schema.Array(PlannedItem),
+    reasoning: Schema.String,
+  }),
+  Schema.Struct({ outcome: Schema.Literal("defer"), reason: Schema.String }),
   Schema.Struct({ outcome: Schema.Literal("replan"), reasoning: Schema.String }),
   Schema.Struct({ outcome: Schema.Literal("escalate"), summary: Schema.String }),
 ]);
@@ -204,7 +214,7 @@ export const UserReviewInput = Schema.Struct({
 });
 
 export const UserReviewOutput = Schema.Struct({
-  outcome: Schema.Literals(["continue", "abandon"]),
+  outcome: Schema.Literals(["continue", "defer", "abandon"]),
   notes: Schema.optionalKey(Schema.String),
 });
 

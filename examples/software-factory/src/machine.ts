@@ -1,9 +1,18 @@
 import { assign, machine, sink, task, transition } from "@forge/core";
 import * as actors from "./actors.ts";
+import { gateTier, readyItems } from "./backlog.ts";
 import * as Schema from "./schema.ts";
 
-/** How many refine cycles an item gets before its failure becomes triage evidence. */
+/** How many refine cycles an item gets before its base is presumed wrong. */
 const MAX_REFINE_ATTEMPTS = 3;
+
+/** How many integrations between milestone verifications. */
+const MILESTONE = 3;
+
+/** How much model-grade spend one item may consume before it becomes triage evidence. */
+function itemSpendCap(item: Schema.Item): number {
+  return { trivial: 3, standard: 6, complex: 9 }[item.complexity];
+}
 
 /** The item currently on the line; tasks inside the item pipeline require one. */
 function currentItem(context: Schema.Context): Schema.Item {
@@ -15,14 +24,36 @@ function currentItem(context: Schema.Context): Schema.Item {
   return item;
 }
 
-/** Every executed work step consumes one unit of the spend budget. */
+/** Meter model-grade work against the run budget. */
 function charge(context: Schema.Context): Schema.Context {
   return { ...context, spend: context.spend + 1 };
+}
+
+/** Item-pipeline work also meters against the current item's own bound. */
+function chargeItem(context: Schema.Context): Schema.Context {
+  return { ...charge(context), itemSpend: context.itemSpend + 1 };
 }
 
 /** Park a blocked worker's question for the ask-user task. */
 function raise(context: Schema.Context, question: string): Schema.Context {
   return { ...context, pendingQuestion: question };
+}
+
+/** Park the current item; deferral cascades to its dependents at selection. */
+function deferCurrent(context: Schema.Context): Schema.Context {
+  if (context.current === undefined) return context;
+
+  const { current: _parked, ...rest } = context;
+  return {
+    ...rest,
+    backlog: context.backlog.map((item) =>
+      item.id === context.current ? { ...item, status: "deferred" as const } : item
+    ),
+    attempts: 0,
+    itemSpend: 0,
+    reworked: false,
+    findings: [],
+  };
 }
 
 export const DeliveryBlueprint = machine({
@@ -59,27 +90,41 @@ export const DeliveryBlueprint = machine({
         input: (context) => ({ backlog: context.backlog }),
         update: ({ context, output }) =>
           output.outcome === "selected"
-            ? { ...context, current: output.itemId, attempts: 0, findings: [] }
+            ? {
+                ...context,
+                current: output.itemId,
+                attempts: 0,
+                itemSpend: 0,
+                reworked: false,
+                findings: [],
+              }
             : context,
       })
     ),
 
     // The item pipeline. Harder items and repeated failure escalate to more
-    // capable workers; any worker can raise a question or a contradiction.
+    // capable workers; a rework entry (refines exhausted) always lands on the
+    // senior tier with a clean slate. Any worker can raise a question or a
+    // contradiction.
     task(
       "implement",
       assign(actors.TrivialImplementer, {
-        when: ({ context }) => currentItem(context).complexity === "trivial",
+        when: ({ context }) =>
+          currentItem(context).complexity === "trivial" && !reworkEntry(context),
         ...implementationHooks(),
       }),
       assign(actors.Implementer, {
         when: ({ context, meta }) =>
-          currentItem(context).complexity === "standard" && meta.retryCount <= 2,
+          currentItem(context).complexity === "standard" &&
+          meta.retryCount <= 2 &&
+          !reworkEntry(context),
         ...implementationHooks(),
       }),
       assign(actors.SeniorImplementer, {
         when: ({ context, meta }) =>
-          currentItem(context).complexity === "complex" || meta.retryCount > 2,
+          currentItem(context).complexity === "complex" ||
+          meta.retryCount > 2 ||
+          reworkEntry(context),
         ...implementationHooks(),
       })
     ),
@@ -111,7 +156,9 @@ export const DeliveryBlueprint = machine({
       assign(actors.Refiner, {
         input: (context) => ({ item: currentItem(context), findings: context.findings }),
         update: ({ context, output }) =>
-          output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
+          output.outcome === "blocked"
+            ? raise(chargeItem(context), output.question)
+            : chargeItem(context),
       })
     ),
 
@@ -129,13 +176,16 @@ export const DeliveryBlueprint = machine({
             ),
             findings: [],
             attempts: 0,
+            itemSpend: 0,
+            reworked: false,
           };
         },
       })
     ),
 
-    // Verification runs once, when the backlog is exhausted. Its floor is the
-    // quality gate: a delivery whose every item was gate-reviewed is gate-verified.
+    // Verification's floor is the quality gate: a delivery whose every item
+    // was gate-reviewed is gate-verified. Milestone verifications surface
+    // plan-level wrongness while replanning is still cheap.
     task(
       "verify",
       assign(actors.GateVerifier, {
@@ -150,8 +200,8 @@ export const DeliveryBlueprint = machine({
       })
     ),
 
-    // Triage classifies accumulated failure evidence: fix one item, replan,
-    // or hand the run to the user.
+    // Triage classifies accumulated failure evidence: respec the item, split
+    // it into smaller ones, park it, replan, or hand the run to the user.
     task(
       "triage",
       assign(actors.Triage, {
@@ -165,19 +215,24 @@ export const DeliveryBlueprint = machine({
           spend: context.spend,
           spendBudget: context.spendBudget,
         }),
-        update: ({ context, output }) =>
-          output.outcome === "fix-item"
-            ? {
-                ...context,
-                backlog: context.backlog.map((item) =>
-                  item.id === context.current
-                    ? { ...item, objective: output.revisedObjective }
-                    : item
-                ),
-                attempts: 0,
-                findings: [],
-              }
-            : context,
+        update: ({ context, output }) => {
+          if (output.outcome === "fix-item") {
+            return {
+              ...context,
+              backlog: context.backlog.map((item) =>
+                item.id === context.current ? { ...item, objective: output.revisedObjective } : item
+              ),
+              attempts: 0,
+              itemSpend: 0,
+              reworked: false,
+              findings: [],
+            };
+          }
+
+          if (output.outcome === "split") return splitCurrent(context, output.fragments);
+          if (output.outcome === "defer") return deferCurrent(context);
+          return context;
+        },
       })
     ),
 
@@ -202,17 +257,20 @@ export const DeliveryBlueprint = machine({
     task(
       "user-review",
       assign(actors.UserReview, {
-        input: (context) => ({
-          summary: `Spent ${context.spend} of ${context.spendBudget} on "${context.input.prompt}"; ${
-            context.backlog.filter((item) => item.status === "integrated").length
-          } of ${context.backlog.length} items integrated. Continue?`,
-        }),
+        input: (context) => {
+          const integrated = context.backlog.filter((i) => i.status === "integrated").length;
+          return {
+            summary: `Spent ${context.spend} of ${context.spendBudget} on "${context.input.prompt}"; ${integrated} of ${context.backlog.length} items integrated. Continue, defer the current item, or abandon?`,
+          };
+        },
         // Continuing past an exhausted budget authorises another tranche;
-        // without it the budget guard would bounce the run straight back here.
-        update: ({ context, output }) =>
-          output.outcome === "continue" && context.spend >= context.spendBudget
+        // deferring parks the current item and ships the rest.
+        update: ({ context, output }) => {
+          if (output.outcome === "defer") return deferCurrent(context);
+          return output.outcome === "continue" && context.spend >= context.spendBudget
             ? { ...context, spendBudget: context.spend + 10 }
-            : context,
+            : context;
+        },
       })
     ),
 
@@ -248,12 +306,20 @@ export const DeliveryBlueprint = machine({
     transition("implement", "ask-user", { on: "blocked" }),
     transition("implement", "triage", { on: "contradiction" }),
 
-    // The refine loop is bounded by the machine: endless review is
-    // unrepresentable, exhaustion becomes triage evidence.
+    // Bounded refinement, then one rework from scratch at the senior tier,
+    // then triage. The item's own spend bound cuts across both loops so a
+    // sick item cannot starve the rest of the backlog.
     transition("review", "integrate", { on: "approved" }),
     transition("review", "refine", {
       on: "changesRequested",
-      when: (context: Schema.Context) => context.attempts < MAX_REFINE_ATTEMPTS,
+      when: (context: Schema.Context) =>
+        context.attempts < MAX_REFINE_ATTEMPTS &&
+        context.itemSpend < itemSpendCap(currentItem(context)),
+    }),
+    transition("review", "implement", {
+      on: "changesRequested",
+      when: (context: Schema.Context) =>
+        !context.reworked && context.itemSpend < itemSpendCap(currentItem(context)),
     }),
     transition("review", "triage", { on: "changesRequested" }),
     transition("review", "triage", { on: "contradiction" }),
@@ -262,18 +328,34 @@ export const DeliveryBlueprint = machine({
     transition("refine", "ask-user", { on: "blocked" }),
     transition("refine", "triage", { on: "contradiction" }),
 
+    // Every MILESTONE integrations, verify while replanning is still cheap.
+    transition("integrate", "verify", {
+      on: "integrated",
+      when: (context: Schema.Context) =>
+        context.backlog.filter((item) => item.status === "integrated").length % MILESTONE === 0 &&
+        readyItems(context.backlog).length > 0,
+    }),
     transition("integrate", "select", { on: "integrated" }),
 
+    // A passed milestone resumes the line; a passed final verification seeks
+    // acceptance. Deferred-blocked items count as done-with-remainder, not work.
+    transition("verify", "select", {
+      on: "passed",
+      when: (context: Schema.Context) => readyItems(context.backlog).length > 0,
+    }),
     transition("verify", "accept", { on: "passed" }),
     transition("verify", "triage", { on: "failed" }),
     transition("verify", "ask-user", { on: "blocked" }),
 
     transition("triage", "select", { on: "fix-item" }),
+    transition("triage", "select", { on: "split" }),
+    transition("triage", "select", { on: "defer" }),
     transition("triage", "plan", { on: "replan" }),
     transition("triage", "user-review", { on: "escalate" }),
 
     transition("ask-user", "select", { on: "answered" }),
     transition("user-review", "select", { on: "continue" }),
+    transition("user-review", "select", { on: "defer" }),
     transition("user-review", "abandoned", { on: "abandon" }),
 
     transition("accept", "done", { on: "accepted" }),
@@ -281,31 +363,50 @@ export const DeliveryBlueprint = machine({
   ],
 });
 
-function implementationHooks() {
+/** A rework entry: refines exhausted, base presumed wrong, start over senior. */
+function reworkEntry(context: Schema.Context): boolean {
+  return context.attempts >= MAX_REFINE_ATTEMPTS;
+}
+
+/**
+ * Replace the current item with smaller fragments. The machine owns id and
+ * dependency integrity — the last fragment inherits the original id so
+ * dependents stay valid, and fragments chain in order — trusting triage only
+ * for objectives and classification.
+ */
+function splitCurrent(
+  context: Schema.Context,
+  fragments: readonly Schema.PlannedItem[]
+): Schema.Context {
+  if (context.current === undefined || fragments.length === 0) return context;
+
+  const original = currentItem(context);
+  const chain = fragments.map((fragment, index) => ({
+    ...fragment,
+    id: index === fragments.length - 1 ? original.id : `${original.id}/${index + 1}`,
+    dependsOn: index === 0 ? original.dependsOn : [`${original.id}/${index}`],
+    status: "pending" as const,
+  }));
+
+  const { current: _split, ...rest } = context;
   return {
-    input: (context: Schema.Context) => ({
-      item: currentItem(context),
-      decisions: context.decisions,
-    }),
-    update: ({
-      context,
-      output,
-    }: {
-      context: Schema.Context;
-      output: Schema.ImplementationOutput;
-    }) =>
-      output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
+    ...rest,
+    backlog: context.backlog.flatMap((item) => (item.id === original.id ? chain : [item])),
+    attempts: 0,
+    itemSpend: 0,
+    reworked: false,
+    findings: [],
   };
 }
 
-/** Items whose review floor is the deterministic quality gate. */
-function gateTier(item: Schema.Item): boolean {
-  return item.complexity === "trivial" && item.risk === "low";
-}
-
 function acceptanceInput(context: Schema.Context) {
+  const integrated = context.backlog.filter((item) => item.status === "integrated").length;
+  const deferred = context.backlog.length - integrated;
   return {
-    summary: `All ${context.backlog.length} backlog items are integrated and verification passed for "${context.input.prompt}".`,
+    summary:
+      deferred === 0
+        ? `All ${context.backlog.length} backlog items are integrated and verification passed for "${context.input.prompt}".`
+        : `${integrated} of ${context.backlog.length} backlog items are integrated (${deferred} deferred) and verification passed for "${context.input.prompt}".`,
     backlog: context.backlog,
   };
 }
@@ -342,8 +443,33 @@ function planHooks({ metered }: { metered: boolean }) {
         backlog: [...integrated, ...planned],
         planVersion: context.planVersion + 1,
         attempts: 0,
+        itemSpend: 0,
+        reworked: false,
         findings: [],
       };
+    },
+  };
+}
+
+function implementationHooks() {
+  return {
+    input: (context: Schema.Context) => ({
+      item: currentItem(context),
+      decisions: context.decisions,
+    }),
+    update: ({
+      context,
+      output,
+    }: {
+      context: Schema.Context;
+      output: Schema.ImplementationOutput;
+    }) => {
+      const charged = chargeItem(context);
+      // A rework entry starts from a clean slate at the senior tier.
+      const based = reworkEntry(context)
+        ? { ...charged, reworked: true, attempts: 0, findings: [] }
+        : charged;
+      return output.outcome === "blocked" ? raise(based, output.question) : based;
     },
   };
 }
@@ -356,7 +482,7 @@ function reviewHooks({ metered }: { metered: boolean }) {
       return { item, summary: `Work delivered for "${item.objective}"` };
     },
     update: ({ context, output }: { context: Schema.Context; output: Schema.ReviewOutput }) => {
-      const charged = metered ? charge(context) : context;
+      const charged = metered ? chargeItem(context) : context;
       if (output.outcome === "approved") {
         return {
           ...charged,

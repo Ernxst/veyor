@@ -82,13 +82,17 @@ export default function factory(seed: number) {
       outcomes: { passed: 0.8, failed: 0.15, blocked: 0.05 },
     }),
 
-    // Self-healing/correction: an item fix is only possible with an item on the line.
+    // Self-healing/correction: item-scoped repairs are only possible with an
+    // item on the line; splitting only makes sense above trivial granularity.
     probabilistic(actors.Triage, {
       seed: seed + 8,
-      outcomes: ({ context }) =>
-        context.current === undefined
-          ? { replan: 0.7, escalate: 0.3 }
-          : { "fix-item": 0.6, replan: 0.25, escalate: 0.15 },
+      outcomes: ({ context }) => {
+        const item = context.backlog.find((candidate) => candidate.id === context.current);
+        if (item === undefined) return { replan: 0.7, escalate: 0.3 };
+        return item.complexity === "trivial"
+          ? { "fix-item": 0.45, defer: 0.25, replan: 0.15, escalate: 0.15 }
+          : { "fix-item": 0.3, split: 0.25, defer: 0.2, replan: 0.15, escalate: 0.1 };
+      },
     }),
 
     // HITL, simulated
@@ -128,11 +132,17 @@ function sticky(base: OutcomeWeights & { changesRequested: number }) {
   });
 }
 
-/** A human waves healthy work through and pulls the plug on distressed runs. */
+/**
+ * A human waves healthy work through; on a distressed run they prefer parking
+ * the sick item and shipping the rest over abandoning everything.
+ */
 function userReviewWeights(context: Schema.Context): OutcomeWeights {
   const overBudget = context.spend >= context.spendBudget;
-  const abandon = overBudget ? 0.5 : 0.02 + 0.28 * distressLevel(context);
-  return { continue: 1 - abandon, abandon };
+  const canDefer = context.current !== undefined;
+  const distress = overBudget ? 1 : distressLevel(context);
+  const decline = overBudget ? 0.6 : 0.03 + 0.3 * distress;
+  const defer = canDefer ? decline * 0.7 : 0;
+  return { continue: 1 - decline, defer, abandon: decline - defer };
 }
 
 /** 0 for a healthy run, 1 for one deep in refine attempts or burning budget. */

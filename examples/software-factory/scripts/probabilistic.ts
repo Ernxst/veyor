@@ -8,6 +8,8 @@ const context: Schema.Context = {
   backlog: [],
   planVersion: 0,
   attempts: 0,
+  itemSpend: 0,
+  reworked: false,
   findings: [],
   spend: 0,
   spendBudget: 25,
@@ -19,6 +21,7 @@ const sinks = new Map<string, number>();
 const failures = new Map<string, number>();
 let spendTotal = 0;
 let integratedTotal = 0;
+let deferredTotal = 0;
 let planTotal = 0;
 let finished = 0;
 
@@ -28,6 +31,7 @@ for (let seed = 1; seed <= RUNS; seed++) {
     sinks.set(result.task, (sinks.get(result.task) ?? 0) + 1);
     spendTotal += result.context.spend;
     integratedTotal += result.context.backlog.filter((i) => i.status === "integrated").length;
+    deferredTotal += result.context.backlog.filter((i) => i.status !== "integrated").length;
     planTotal += result.context.planVersion;
     finished++;
   } catch (error) {
@@ -53,7 +57,8 @@ if (failed > 0) {
 if (finished > 0) {
   console.log(
     `\n  mean spend ${(spendTotal / finished).toFixed(1)}, ` +
-      `mean items integrated ${(integratedTotal / finished).toFixed(1)} of 6, ` +
+      `mean items integrated ${(integratedTotal / finished).toFixed(1)} of 6 ` +
+      `(deferred ${(deferredTotal / finished).toFixed(2)}), ` +
       `mean plans per run ${(planTotal / finished).toFixed(2)}`
   );
 }

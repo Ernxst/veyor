@@ -24,21 +24,24 @@ stateDiagram-v2
   implement --> review : implemented
   review --> integrate : approved
   review --> refine : changesRequested [attempts < 3]
+  review --> implement : changesRequested [rework, once]
   review --> triage : changesRequested [stalled]
   refine --> review : refined
   integrate --> select : integrated
+  integrate --> verify : integrated [every 3rd]
 
+  verify --> select : passed [work remains]
   verify --> accept : passed
   verify --> triage : failed
   accept --> done : accepted
   accept --> triage : rejected
 
-  triage --> select : fix item
+  triage --> select : fix item / split / defer
   triage --> plan : replan
   triage --> userReview : escalate
 
   askUser --> select : answered
-  userReview --> select : continue
+  userReview --> select : continue / defer
   userReview --> abandoned : abandon
 
   implement --> askUser : blocked
@@ -59,6 +62,7 @@ The design rests on a handful of commitments:
 - **Loops are bounded by the machine.** The refine loop carries a guard (`attempts < 3`); its exhaustion is not an error but _evidence_, routed to triage. Endless review is unrepresentable.
 - **Policy lives on edges, not stations.** The spend budget is a guarded transition out of `select` with a human fallback, not a task on the line. Stall detection dissolved into the refine bound entirely.
 - **Friction is ambient, discretion is not.** Any working actor can report `blocked` (a question for the user) or `contradiction` (the work conflicts with the plan). Escape hatches are always reachable as _outcomes_, but never offered to a scheduler as _choices_.
+- **Failure is item-scoped, never run-scoped by default.** A failing item gets bounded refinement, then one senior-tier rework from scratch, then triage — which can respec it, **split** it into smaller fragments (the machine preserves id and dependency integrity), or **defer** it. Deferral cascades to dependents and the line ships the remainder: a run with one sick item ends `done` with a delivered/deferred split, not `abandoned`. Each item also carries its own spend bound so a pathological item cannot starve the backlog, and milestone verification (every third integration) surfaces plan-level wrongness while replanning is still cheap. Run-scoped failure is reachable only through explicit escalation.
 - **Replanning is a funnel, not a whim.** Evidence of model-wrongness — refine exhaustion, contradictions, verification failure, an inconsistent backlog — drains into `triage`, which classifies once: fix one item, replan, or escalate to the human. A replan **amends** the backlog; integrated work is preserved.
 - **Every station has a free floor.** Planning adopts a caller-supplied backlog without a model call; verification and acceptance drop to the gate and to policy when every item is gate-tier; scheduling and integration are always deterministic. The degenerate case — a caller (typically another agent) handing over one trivial item — costs exactly **one** model-grade call: zero overhead over asking an LLM directly. Spend meters model-grade work only, so the budget is a true token proxy.
 - **Authority boundaries, not human boundaries:** questions (`ask-user`), funding and continuation (`user-review`), and final acceptance (`accept`) are held by whoever assembles them — a terminal human here, the calling agent in an agent-to-agent assembly, or policy for gate-tier deliveries. Answers persist as `decisions` that every later task reads.
@@ -88,7 +92,7 @@ Run the Monte Carlo:
 bun run simulate
 ```
 
-At 10,000 seeded runs with a budget of 25 model-grade work units: **~94% delivered**, ~6% abandoned, a mean spend of ~18, ~5.9 of 6 items integrated, and ~0.4 replans per run. The budget is a visible lever: most abandonment at budget 25 is the spend gate converting overrun tail-risk into human decisions — at budget 35 abandonment drops to ~2% while mean spend stays ~18, showing the demand is bounded with a refine-variance tail rather than runaway cost. The script also prints the degenerate case: a caller-supplied trivial item delivers at a spend of exactly 1.
+At 10,000 seeded runs with a budget of 25 model-grade work units: **~97% delivered**, ~3% abandoned, a mean spend of ~18, ~5.7 of 6 items integrated (~0.35 deferred inside successful runs — partial delivery working as designed), and ~1.4 plans per run. The budget is a visible lever: at budget 35 abandonment drops to ~1%. The script also prints the degenerate case: a caller-supplied trivial item delivers at a spend of exactly 1.
 
 ### LLM assembly
 

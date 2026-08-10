@@ -1,5 +1,6 @@
 import { deterministic } from "@forge/core/actors";
 import * as actors from "../actors.ts";
+import { readyItems, unreachableItems } from "../backlog.ts";
 
 /**
  * Selection is scheduling, not judgment: the first pending item whose
@@ -7,18 +8,20 @@ import * as actors from "../actors.ts";
  * signal that the plan itself is inconsistent.
  */
 export const Selector = deterministic(actors.Selector, ({ input }) => {
+  const ready = readyItems(input.backlog);
+  if (ready[0] !== undefined) return { outcome: "selected" as const, itemId: ready[0].id };
+
   const pending = input.backlog.filter((item) => item.status === "pending");
   if (pending.length === 0) return { outcome: "exhausted" as const };
 
-  const integrated = new Set(
-    input.backlog.filter((item) => item.status === "integrated").map((item) => item.id)
-  );
-  const ready = pending.find((item) => item.dependsOn.every((dep) => integrated.has(dep)));
-  return ready !== undefined
-    ? { outcome: "selected" as const, itemId: ready.id }
+  // Deferral cascades: items blocked by a parked dependency are remainder,
+  // not work — the line ships without them. Anything else is a broken plan.
+  const unreachable = unreachableItems(input.backlog);
+  return pending.every((item) => unreachable.has(item.id))
+    ? { outcome: "exhausted" as const }
     : {
         outcome: "inconsistent" as const,
-        reason: "no pending item has all of its dependencies integrated",
+        reason: "pending items form a dependency cycle or reference missing items",
       };
 });
 
