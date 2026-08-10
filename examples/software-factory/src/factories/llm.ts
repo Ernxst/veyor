@@ -19,7 +19,7 @@ export default assemble(
   // Planning owns the model of the work: a backlog of items with acceptance
   // criteria and dependencies. On a replan it receives the current backlog
   // and the accumulated decisions as evidence.
-  claude(actors.Planner, "claude-opus-5", {
+  claude(actors.Planner, "claude-fable-5", {
     effort: "xhigh",
     permissionMode: "dontAsk",
     instructions: `
@@ -104,7 +104,7 @@ Do not repair missing work.
   }),
 
   // Model repair and recovery
-  claude(actors.Triage, "claude-opus-5", {
+  claude(actors.Triage, "claude-fable-5", {
     effort: "high",
     permissionMode: "dontAsk",
     instructions: `
