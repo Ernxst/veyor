@@ -11,10 +11,14 @@ That split is Forge's core idea: design the factory before choosing the cost, ca
 
 ## Why Forge?
 
-An honest framing first: typed, state-machine-constrained agents are not new — [`statelyai/agent`](https://github.com/statelyai/agent) established that idea, and Forge borrows it openly. Forge's own claim is narrower and specific. Two things distinguish it:
+Suppose you want multi-step work — delivering software, most concretely — done by some mix of AI models, ordinary code, and people. The common approach is to hand the whole job to one AI agent in a loop and steer it with prompts. That works until you care about three things at once: **process** (nothing forces the agent to review before shipping — quality lives in a prompt it may ignore), **cost** (you learn what a run costs by paying for it, and an agent deciding its own next step spends expensive judgment on decisions that need none), and **predictability** (you cannot test the workflow without running the workers).
 
-1. **The actor contract is the unit of substitution.** A blueprint names capabilities with typed context, input, and output schemas — never workers. The same actor can be filled by deterministic code, a human at a terminal, an Anthropic or OpenAI model, a Claude Code or Codex CLI session, or a seeded simulator, chosen per assembly without touching the workflow. Agent frameworks generally fix the worker kind (a model) and vary the prompt; Forge varies the worker.
-2. **Simulation is a first-class assembly, not a mock.** Because outputs are schema-typed and routing is outcome-driven, seeded probabilistic actors can generate contract-valid outputs — including context-correlated failure like rejection streaks — and drive the real machine through its real transitions. You can Monte Carlo a workflow's outcome distribution and spend profile before paying for a single model call or human hour.
+Forge separates the process from the workers. You describe the workflow once — its steps, the allowed paths between them, and the exact shape of every input and output — as a typed **blueprint**. Then you **assemble** it by plugging a worker into each role: a plain function, an AI model, a coding agent in a terminal, a person, or a simulator. The blueprint enforces the process; the workers are interchangeable; the type system checks that nothing is missing before anything runs.
+
+That separation is the whole idea, and it pays twice:
+
+1. **The role contract is the unit of substitution.** A blueprint names capabilities with typed context, input, and output schemas — never workers. The same role can be filled by deterministic code, a human at a terminal, an Anthropic or OpenAI model, a Claude Code, Codex, or opencode CLI session, or a seeded simulator, chosen per assembly without touching the workflow. Swap a reviewer from one vendor to another, or from a model to a person, and the process does not change.
+2. **Simulation is a first-class assembly, not a mock.** Because outputs are schema-typed and routing is outcome-driven, seeded probabilistic workers can generate contract-valid outputs — including realistic correlated failure like rejection streaks — and drive the real machine through its real transitions. You can Monte Carlo a workflow's outcome distribution and spend profile ten thousand times before paying for a single model call or human hour.
 
 The supporting choices serve those two ideas:
 
@@ -22,7 +26,9 @@ The supporting choices serve those two ideas:
 - **Assemblies own execution choices.** A blueprint is complete only when every actor has an implementation, checked at compile time.
 - **Schemas stay at the boundary.** Standard Schema contracts, with adapters for Effect Schema, TypeBox, and Valibot, validated at runtime.
 
-The result is a factory-first library: the durable artifact is the workflow and its contracts, not a prompt, provider, terminal layout, or one agent loop. If you only need a model constrained by a state machine, use Stately Agent; Forge earns its place when you need the same workflow to survive changes in who — or what — does the work.
+The result is a factory-first library: the durable artifact is the workflow and its contracts, not a prompt, provider, terminal layout, or one agent loop.
+
+**If you already know the landscape:** typed, state-machine-constrained agents are not new — [`statelyai/agent`](https://github.com/statelyai/agent) established the idea of a machine owning an agent's control flow, and Forge borrows it openly. Forge's own claim is the two points above: replaceable workers behind typed contracts, and simulation as an assembly. If you only need a model constrained by a state machine, use Stately Agent; Forge earns its place when you need the same workflow to survive changes in who — or what — does the work.
 
 ## Core model
 
