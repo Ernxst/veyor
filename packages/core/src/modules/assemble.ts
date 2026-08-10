@@ -2,6 +2,17 @@ import { createActor, toPromise } from "xstate";
 import { validate } from "../lib/schema/validate.ts";
 import type { Actor } from "./actor.ts";
 import { compile, Failed, type Runtime } from "./compilers/xstate.ts";
+
+/** The task a (possibly compound) state value denotes. */
+function stateName(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value !== null) {
+    const key = Object.keys(value).at(0);
+    if (key !== undefined) return key;
+  }
+
+  return String(value);
+}
 import type { Machine } from "./machine.ts";
 import type { Task } from "./task.ts";
 
@@ -21,18 +32,36 @@ export function assemble<M extends Machine.Any, const Actors extends Actor.Assem
   machine: M,
   ...actors: Actors & CompleteActors<M["actors"], Actors>
 ): Machine.Impl<M> {
-  const fsm = compile(machine, actors);
   return {
     def: machine,
     // @effect-diagnostics-next-line asyncFunction:off
-    async run(context) {
+    async run(context, options) {
+      const fsm = compile(machine, actors, options?.observer);
       const contract = machine.contract.Context;
       const input =
         contract === undefined ? context : await validate(contract, context, "context", machine.id);
 
       const running = createActor(fsm, { input });
+
+      // Transitions are observed from the snapshot stream — XState evaluates
+      // function-form transitions speculatively, so they must stay pure.
+      let previous: string | undefined;
+      const subscription = running.subscribe({
+        next: (snapshot) => {
+          const value = stateName(snapshot.value);
+          if (previous !== undefined && value !== previous && options?.observer !== undefined) {
+            options.observer({ type: "transition", from: previous, to: value });
+          }
+          previous = value;
+        },
+        // Failures surface through toPromise below; an errorless subscriber
+        // would re-report them as unhandled.
+        error: () => undefined,
+      });
+
       running.start();
-      await toPromise(running);
+      previous = stateName(running.getSnapshot().value);
+      await toPromise(running).finally(() => subscription.unsubscribe());
 
       const snapshot = running.getSnapshot();
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the compiler owns this shape

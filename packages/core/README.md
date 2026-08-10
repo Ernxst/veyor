@@ -138,6 +138,10 @@ A bare predicate remains shorthand for `{ when }`. Failed invocations are retrie
 
 `Factory.run(context)` validates the context against the machine contract, runs the machine, and resolves with `{ task, context }` — the sink it stopped at and the final context.
 
+## Observing a run
+
+`run(context, { observer })` streams progress events — `invoke`, `complete` (with outcome and duration), `transition` (with the chosen edge), `retry`, and `error` — as the machine executes. This is the first slice of run history: enough to watch a live factory and attribute time and failures per actor.
+
 ## Transitions
 
 `transition(from, to, { on, when? })` routes on the actor's declared `outcome`, and optionally on context. Guarded transitions let policy live on edges instead of dedicated policy tasks — a budget gate or a bounded retry loop is a guard plus an unguarded fallback:

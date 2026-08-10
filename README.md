@@ -47,7 +47,7 @@ Implemented today:
 - Standard Schema adapters and actor-output validation;
 - an XState compiler with task input derivation, actor-output updates to machine context, context-aware selection between several assignments, and guarded transitions that route on outcome plus context;
 - per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
-- `Factory.run(...)` validating the initial context and resolving with the final sink and context;
+- `Factory.run(...)` validating the initial context, streaming progress events to an observer, and resolving with the final sink and context;
 - seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and its Monte Carlo script).
 
 Not implemented:

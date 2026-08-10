@@ -24,9 +24,10 @@ const selectionSignal = new AbortController().signal;
 
 export function compile<M extends Machine.Any>(
   machine: M,
-  actors: readonly Actor.ImplementationOf<Actor.Any>[]
+  actors: readonly Actor.ImplementationOf<Actor.Any>[],
+  observer?: (event: Machine.RunEvent) => void
 ) {
-  return setup({ actors: compileActors(machine, actors) }).createMachine({
+  return setup({ actors: compileActors(machine, actors, observer) }).createMachine({
     id: machine.id,
     initial: machine.initial,
     context: ({ input }): Runtime => ({ user: input, retryCount: 0 }),
@@ -38,7 +39,11 @@ export function compile<M extends Machine.Any>(
   });
 }
 
-function compileActors(machine: Machine.Any, actors: readonly Actor.ImplementationOf<Actor.Any>[]) {
+function compileActors(
+  machine: Machine.Any,
+  actors: readonly Actor.ImplementationOf<Actor.Any>[],
+  observer?: (event: Machine.RunEvent) => void
+) {
   const byName = Object.fromEntries(actors.map((actor) => [actor.name, actor]));
   return Object.fromEntries(
     machine.tasks.flatMap((task: Task.Any) =>
@@ -47,12 +52,41 @@ function compileActors(machine: Machine.Any, actors: readonly Actor.Implementati
         createAsyncLogic<Actor.Result, InvocationInput>({
           id: assignment.actor.name,
           run: ({ input, signal }) => {
-            const name = assignment.actor.name;
-            const concrete = byName[name];
-            if (concrete !== undefined) return concrete.run({ ...input, signal });
+            const actor = assignment.actor.name;
+            const concrete = byName[actor];
+            if (concrete === undefined) {
+              throw new Error(
+                `Actor "${actor}" has no implementation. Add one before running the machine.`
+              );
+            }
 
-            throw new Error(
-              `Actor "${name}" has no implementation. Add one before running the machine.`
+            if (input.meta.retryCount > 0) {
+              observer?.({ type: "retry", task: task.name, attempt: input.meta.retryCount });
+            }
+
+            observer?.({ type: "invoke", task: task.name, actor });
+            const started = performance.now();
+            return concrete.run({ ...input, signal }).then(
+              (output: Actor.Result) => {
+                observer?.({
+                  type: "complete",
+                  task: task.name,
+                  actor,
+                  outcome: output.outcome,
+                  durationMs: performance.now() - started,
+                });
+                return output;
+              },
+              (error: unknown) => {
+                observer?.({
+                  type: "error",
+                  task: task.name,
+                  actor,
+                  error,
+                  durationMs: performance.now() - started,
+                });
+                throw error;
+              }
             );
           },
         }),

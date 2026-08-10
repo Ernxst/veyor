@@ -60,8 +60,35 @@ export declare namespace Machine {
 
   export interface Impl<M extends Any> {
     readonly def: M;
-    run(context: ContextOf<M>): Promise<Result<ContextOf<M>, Task.SinkNamesOf<M["tasks"]>>>;
+    run(
+      context: ContextOf<M>,
+      options?: RunOptions
+    ): Promise<Result<ContextOf<M>, Task.SinkNamesOf<M["tasks"]>>>;
   }
+
+  export interface RunOptions {
+    /** Receives progress events as the machine runs; the first slice of run history. */
+    readonly observer?: (event: RunEvent) => void;
+  }
+
+  export type RunEvent =
+    | { readonly type: "invoke"; readonly task: string; readonly actor: string }
+    | {
+        readonly type: "complete";
+        readonly task: string;
+        readonly actor: string;
+        readonly outcome: string;
+        readonly durationMs: number;
+      }
+    | {
+        readonly type: "error";
+        readonly task: string;
+        readonly actor: string;
+        readonly error: unknown;
+        readonly durationMs: number;
+      }
+    | { readonly type: "retry"; readonly task: string; readonly attempt: number }
+    | { readonly type: "transition"; readonly from: string; readonly to: string };
 
   export interface Result<Context, Sink extends string = string> {
     readonly task: Sink;

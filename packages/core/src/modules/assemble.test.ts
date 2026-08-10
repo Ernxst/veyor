@@ -6,7 +6,7 @@ import { schema } from "../lib/schema/effect.ts";
 import { actor } from "./actor.ts";
 import { assemble } from "./assemble.ts";
 import { assign } from "./assignment.ts";
-import { machine } from "./machine.ts";
+import { machine, type Machine } from "./machine.ts";
 import { sink, task } from "./task.ts";
 import { transition } from "./transition.ts";
 
@@ -182,6 +182,34 @@ describe("assemble().run", () => {
     await expect(factory.run({ attempts: 0 })).resolves.toMatchObject({ task: "retried" });
     // …while 1 → 2 falls through to the unguarded fallback.
     await expect(factory.run({ attempts: 1 })).resolves.toMatchObject({ task: "stalled" });
+  });
+
+  it("streams run progress to the observer", async () => {
+    const Context = schema(Schema.Struct({}));
+    const Worker = actor("worker", {
+      context: Context,
+      input: Empty,
+      output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
+      aggregate: Empty,
+    });
+
+    const Blueprint = machine({
+      id: "observed",
+      initial: "work",
+      context: Context,
+      tasks: [task("work", assign(Worker)), sink("done")],
+      transitions: [transition("work", "done", { on: "completed" })],
+    });
+
+    const events: Machine.RunEvent[] = [];
+    await assemble(
+      Blueprint,
+      deterministic(Worker, () => ({ outcome: "completed" as const }))
+    ).run({}, { observer: (event) => events.push(event) });
+
+    expect(events.map((event) => event.type)).toStrictEqual(["invoke", "complete", "transition"]);
+    expect(events[1]).toMatchObject({ task: "work", actor: "worker", outcome: "completed" });
+    expect(events[2]).toMatchObject({ from: "work", to: "done" });
   });
 
   it("rejects when every matching transition's guard refuses", async () => {
