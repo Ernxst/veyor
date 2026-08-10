@@ -15,12 +15,11 @@ pre-commit:
       stage_fixed: true
 
     - name: lint staged code
-      run: bun oxlint --fix {staged_files}
-      # oxlint only lints JS/TS; passing it package.json/tsconfig (the only
-      # staged file in a config-only commit) makes it exit 1 ("No files found
-      # to lint"). Scope the trigger to code files so config-only commits skip.
+      # Repo-wide on purpose: type-aware single-file linting resolves types
+      # without the project graph and disagrees with the repo-wide run about
+      # which disables are needed. The glob still skips config-only commits.
+      run: bun oxlint .
       glob: "**/*.{js,jsx,mjs,cjs,mts,cts,ts,tsx}"
-      stage_fixed: true
 
     - name: validation checks
       group:
