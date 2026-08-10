@@ -1,0 +1,23 @@
+{
+  "name": "@forge/software-factory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "forge": "forge run",
+    "simulate": "bun scripts/probabilistic.ts",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@forge/anthropic": "workspace:*",
+    "@forge/cli": "workspace:*",
+    "@forge/core": "workspace:*",
+    "@forge/openai": "workspace:*",
+    "effect": "4.0.0-beta.103"
+  },
+  "devDependencies": {
+    "@forge/tsconfig": "workspace:*",
+    "typescript": "7.0.2"
+  }
+}

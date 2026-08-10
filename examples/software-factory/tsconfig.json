@@ -1,0 +1,3 @@
+{
+  "extends": ["@forge/tsconfig", "@forge/tsconfig/node"]
+}
