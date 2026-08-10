@@ -65,6 +65,7 @@ const result = await factory.run(
     backlog: planned.map((item) => ({ ...item, status: "pending" as const })),
     planVersion: 0,
     attempts: 0,
+    unverifiedRisk: 0,
     itemSpend: 0,
     reworked: false,
     findings: [],
