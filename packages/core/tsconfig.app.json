@@ -1,0 +1,4 @@
+{
+  "extends": ["@forge/tsconfig", "@forge/tsconfig/effect", "@forge/tsconfig/node"],
+  "include": ["src"]
+}
