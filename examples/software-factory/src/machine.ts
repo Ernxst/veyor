@@ -142,11 +142,15 @@ export const DeliveryBlueprint = machine({
       }),
       assign(actors.Reviewer, {
         when: ({ context }) =>
-          !gateTier(currentItem(context)) && currentItem(context).risk !== "high",
+          !gateTier(currentItem(context)) &&
+          currentItem(context).risk !== "high" &&
+          !context.reworked,
         ...reviewHooks({ metered: true }),
       }),
+      // Review escalates on evidence like implementation does: an item that
+      // needed a rework has proven it is hard, whatever its predicted risk.
       assign(actors.AdversarialReviewer, {
-        when: ({ context }) => currentItem(context).risk === "high",
+        when: ({ context }) => currentItem(context).risk === "high" || context.reworked,
         ...reviewHooks({ metered: true }),
       })
     ),
