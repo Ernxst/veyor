@@ -1,0 +1,6 @@
+{
+  "extends": ["./tsconfig.app.json", "@forge/tsconfig/build"],
+  "compilerOptions": {
+    "isolatedDeclarations": false
+  }
+}

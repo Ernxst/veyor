@@ -1,0 +1,45 @@
+# `@forge/anthropic`
+
+`@forge/anthropic` provides Anthropic-backed implementations for Forge actors.
+
+It exposes two separate adapters:
+
+- `@forge/anthropic/anthropic` creates an Effect AI model layer for `@forge/ai-effect`.
+- `@forge/anthropic/claude` runs a Forge actor through the local Claude Code CLI in headless mode.
+
+> [!IMPORTANT]
+> This package is under active development. It is private, remains at `0.0.0`, and is not published to a package registry.
+
+## Anthropic API
+
+Use `anthropic(model)` with `agent(...)` when the actor should call the Anthropic API through Effect AI.
+
+```ts
+import { agent } from "@forge/ai-effect";
+import { anthropic } from "@forge/anthropic/anthropic";
+import { Writer } from "./actors.js";
+
+const WriterImpl = agent(Writer, anthropic("claude-opus-5"), {
+  prompt: "Return a concise implementation plan.",
+});
+```
+
+The adapter reads `ANTHROPIC_API_KEY` through Effect `Config`. Missing or invalid configuration fails when the model layer is used.
+
+## Claude Code CLI
+
+Use `claude(actor, model, options)` when a Claude Code session should implement the actor. The adapter drives the CLI's supported headless mode (`claude --print`) with your own local authentication, passes the actor's output contract via `--json-schema`, and validates the structured result.
+
+```ts
+import { claude } from "@forge/anthropic/claude";
+import { Reviewer } from "./actors.js";
+
+const ReviewerImpl = claude(Reviewer, "claude-opus-5", {
+  effort: "high",
+  cwd: process.cwd(),
+  permissionMode: "dontAsk",
+  instructions: "Review the assignment against its acceptance criteria.",
+});
+```
+
+Options map onto CLI flags: `effort`, `instructions` (`--append-system-prompt`), `permissionMode`, `allowedTools`/`disallowedTools`, `maxBudgetUsd`, and `cwd`. Sessions run with `--no-session-persistence`; each invocation is a fresh, single-shot worker.
