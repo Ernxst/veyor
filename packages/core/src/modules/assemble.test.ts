@@ -139,6 +139,79 @@ describe("assemble().run", () => {
     expect(worker).toHaveBeenCalledTimes(2);
   });
 
+  it("routes by declaration order through guards that see the updated context", async () => {
+    const Context = schema(Schema.Struct({ attempts: Schema.Finite }));
+    const Output = schema(Schema.Struct({ outcome: Schema.Literal("checked") }));
+
+    const Worker = actor("worker", {
+      context: Context,
+      input: Empty,
+      output: Output,
+      aggregate: Empty,
+    });
+
+    const Blueprint = machine({
+      id: "guarded-routing",
+      initial: "work",
+      context: Context,
+      tasks: [
+        task(
+          "work",
+          assign(Worker, {
+            update: ({ context }) => ({ ...context, attempts: context.attempts + 1 }),
+          })
+        ),
+        sink("retried"),
+        sink("stalled"),
+      ],
+      transitions: [
+        transition("work", "retried", {
+          on: "checked",
+          when: (context: { attempts: number }) => context.attempts < 2,
+        }),
+        transition("work", "stalled", { on: "checked" }),
+      ],
+    });
+
+    const factory = assemble(
+      Blueprint,
+      deterministic(Worker, () => ({ outcome: "checked" as const }))
+    );
+
+    // The guard reads the post-update count: 0 → 1 stays under the bound…
+    await expect(factory.run({ attempts: 0 })).resolves.toMatchObject({ task: "retried" });
+    // …while 1 → 2 falls through to the unguarded fallback.
+    await expect(factory.run({ attempts: 1 })).resolves.toMatchObject({ task: "stalled" });
+  });
+
+  it("rejects when every matching transition's guard refuses", async () => {
+    const Context = schema(Schema.Struct({}));
+    const Worker = actor("worker", {
+      context: Context,
+      input: Empty,
+      output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
+      aggregate: Empty,
+    });
+
+    const Blueprint = machine({
+      id: "guard-exhaustion",
+      initial: "work",
+      context: Context,
+      retries: 0,
+      tasks: [task("work", assign(Worker)), sink("done")],
+      transitions: [transition("work", "done", { on: "completed", when: () => false })],
+    });
+
+    const factory = assemble(
+      Blueprint,
+      deterministic(Worker, () => ({ outcome: "completed" as const }))
+    );
+
+    await expect(factory.run({})).rejects.toThrow(
+      'Task "work" matched 1 transition(s) for outcome "completed", but every guard refused.'
+    );
+  });
+
   it("rejects when an outcome has no transition", async () => {
     const Context = schema(Schema.Struct({}));
     const Worker = actor("worker", {

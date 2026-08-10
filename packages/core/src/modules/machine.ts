@@ -33,7 +33,7 @@ export declare namespace Machine {
     readonly id: string;
     readonly initial: string;
     readonly tasks: readonly Task.Any[];
-    readonly transitions: readonly Transition[];
+    readonly transitions: readonly Transition.Any[];
     readonly retries: number;
     readonly actors: readonly Actor.Any[];
     readonly contract: {

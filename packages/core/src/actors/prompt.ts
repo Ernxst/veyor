@@ -65,6 +65,28 @@ function parseQuestionAnswer(
   throw new Error(`Enter a number or option from this list: ${options.join(", ")}.`);
 }
 
+export function acceptance(): PromptFormat<
+  { summary: string },
+  { outcome: "accepted" | "rejected"; notes?: string }
+> {
+  return {
+    render: (q) => `${q.summary}\n\naccept or reject?\n> `,
+    parse: (raw) => {
+      const [verdictRaw, ...rest] = raw.trim().split(/\s+/);
+      const verdict = verdictRaw?.toLowerCase();
+      if (verdict !== "accept" && verdict !== "reject") {
+        throw new Error('Enter "accept" or "reject".');
+      }
+
+      const notes = rest.join(" ").trim();
+      return {
+        outcome: verdict === "accept" ? "accepted" : "rejected",
+        ...(notes.length > 0 ? { notes } : {}),
+      };
+    },
+  };
+}
+
 export function review(): PromptFormat<
   { summary: string; diff?: string },
   { outcome: "continue" | "abandon"; notes?: string }

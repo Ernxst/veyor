@@ -138,6 +138,17 @@ A bare predicate remains shorthand for `{ when }`. Failed invocations are retrie
 
 `Factory.run(context)` validates the context against the machine contract, runs the machine, and resolves with `{ task, context }` — the sink it stopped at and the final context.
 
+## Transitions
+
+`transition(from, to, { on, when? })` routes on the actor's declared `outcome`, and optionally on context. Guarded transitions let policy live on edges instead of dedicated policy tasks — a budget gate or a bounded retry loop is a guard plus an unguarded fallback:
+
+```ts
+transition("review", "refine", { on: "changesRequested", when: (c: Context) => c.attempts < 3 }),
+transition("review", "triage", { on: "changesRequested" }),
+```
+
+Semantics: transitions are evaluated in declaration order and the first whose outcome matches and whose guard passes wins; guards see the context **after** the actor's `update` has been folded in; guards must be pure and synchronous. If an outcome matches transitions but every guard refuses, the run rejects loudly rather than stalling.
+
 ## Current limits
 
 - The XState compiler is the only runtime compiler.

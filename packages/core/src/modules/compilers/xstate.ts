@@ -4,7 +4,6 @@ import type { Actor } from "../actor.ts";
 import type { Assignment } from "../assignment.ts";
 import type { Machine } from "../machine.ts";
 import { isSink, type Task } from "../task.ts";
-import type { Transition } from "../transition.ts";
 
 /** Internal final state a run enters when a task exhausts its retries. */
 export const Failed = "forge:failed";
@@ -70,27 +69,37 @@ function invocationInput(assignment: Assignment.Any, runtime: Runtime): Invocati
   };
 }
 
-/** Routes a finished invocation by its outcome and folds the output into context. */
+/**
+ * Folds the actor's output into context, then routes by outcome and guard.
+ * Transitions are tried in declaration order against the updated context;
+ * the first whose guard passes (or that has none) wins.
+ */
 function completion(machine: Machine.Any, task: Task.Any, assignment: Assignment.Any) {
-  const outgoing = machine.transitions.filter((t: Transition) => t.from === task.name);
+  const outgoing = machine.transitions.filter((t) => t.from === task.name);
 
   return ({ context, event }: { context: Runtime; event: DoneActorEvent<Actor.Result> }) => {
     const outcome = event.output.outcome;
-    const next = outgoing.find((t: Transition) => t.on === outcome);
-    if (next === undefined) {
+    const candidates = outgoing.filter((t) => t.on === outcome);
+    if (candidates.length === 0) {
       throw new Error(`Task "${task.name}" has no transition for outcome "${outcome}".`);
+    }
+
+    const user = assignment.update({
+      context: context.user,
+      input: assignment.input(context.user),
+      output: event.output,
+    });
+
+    const next = candidates.find((t) => t.when === undefined || t.when(user));
+    if (next === undefined) {
+      throw new Error(
+        `Task "${task.name}" matched ${candidates.length} transition(s) for outcome "${outcome}", but every guard refused.`
+      );
     }
 
     return {
       target: `#${machine.id}.${next.to}`,
-      context: {
-        user: assignment.update({
-          context: context.user,
-          input: assignment.input(context.user),
-          output: event.output,
-        }),
-        retryCount: 0,
-      },
+      context: { user, retryCount: 0 },
     };
   };
 }
