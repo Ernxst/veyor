@@ -2,32 +2,31 @@ import { assign, machine, sink, task, transition } from "@forge/core";
 import * as actors from "./actors.ts";
 import * as Schema from "./schema.ts";
 
-type Commitment = Extract<
-  Schema.Resolution,
-  { outcome: "implement" | "review" | "verify" | "refine" }
->;
+/** How many refine cycles an item gets before its failure becomes triage evidence. */
+const MAX_REFINE_ATTEMPTS = 3;
 
-/** The accepted resolution, narrowed to the commitment a task expects. */
-function accepted<Outcome extends Commitment["outcome"]>(
-  context: Schema.Context,
-  outcome: Outcome
-): Extract<Schema.Resolution, { outcome: Outcome }> {
-  const resolution = context.resolution;
-  if (resolution?.outcome !== outcome) {
-    throw new Error(`The accepted resolution is "${resolution?.outcome}", not "${outcome}".`);
+/** The item currently on the line; tasks inside the item pipeline require one. */
+function currentItem(context: Schema.Context): Schema.Item {
+  const item = context.backlog.find((candidate) => candidate.id === context.current);
+  if (item === undefined) {
+    throw new Error(`No backlog item is on the line (current: "${context.current}").`);
   }
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- narrowed by the outcome check
-  return resolution as Extract<Schema.Resolution, { outcome: Outcome }>;
+  return item;
 }
 
-/** Every executed commitment consumes one unit of the spend budget. */
-function charge<Step extends { context: Schema.Context }>({ context }: Step): Schema.Context {
+/** Every executed work step consumes one unit of the spend budget. */
+function charge(context: Schema.Context): Schema.Context {
   return { ...context, spend: context.spend + 1 };
 }
 
-export const MySoftwareFactoryBlueprint = machine({
-  id: "my-software-factory",
+/** Park a blocked worker's question for the ask-user task. */
+function raise(context: Schema.Context, question: string): Schema.Context {
+  return { ...context, pendingQuestion: question };
+}
+
+export const DeliveryBlueprint = machine({
+  id: "software-delivery-factory",
   initial: "plan",
   context: Schema.Context,
   retries: 3,
@@ -36,8 +35,8 @@ export const MySoftwareFactoryBlueprint = machine({
     sink("done"),
     sink("abandoned"),
 
-    // Planning establishes or repairs the model. A new plan resets the
-    // resolution and the rejection streak: the old approach no longer counts.
+    // Planning produces the backlog. A replan amends it: integrated items are
+    // preserved, pending ones are replaced by the revised plan.
     task(
       "plan",
       assign(actors.Planner, {
@@ -45,233 +44,297 @@ export const MySoftwareFactoryBlueprint = machine({
           prompt: context.input.prompt,
           files: context.input.files,
           decisions: context.decisions,
+          backlog: context.backlog,
         }),
         update: ({ context, output }) => {
-          const { resolution: _replaced, ...rest } = context;
-          return { ...rest, risk: output.risk, complexity: output.complexity, reviewHistory: [] };
-        },
-      })
-    ),
+          const integrated = context.backlog.filter((item) => item.status === "integrated");
+          const keep = new Set(integrated.map((item) => item.id));
+          const planned = output.backlog
+            .filter((item) => !keep.has(item.id))
+            .map((item) => ({ ...item, status: "pending" as const }));
 
-    // Resolution selects exactly one next commitment and records it.
-    task(
-      "resolve",
-      assign(actors.Resolver, {
-        input: (context) => ({
-          prompt: context.input.prompt,
-          risk: context.risk,
-          complexity: context.complexity,
-          reviewHistory: context.reviewHistory,
-          decisions: context.decisions,
-        }),
-        update: ({ context, output }) => ({ ...context, resolution: output }),
-      })
-    ),
-
-    // The spend gate passes the accepted commitment through, or halts the run
-    // for a human once the budget is exhausted.
-    task(
-      "spend-check",
-      assign(actors.SpendGuard, {
-        input: (context) => {
-          const resolution = context.resolution;
-          if (
-            resolution === undefined ||
-            resolution.outcome === "ask-user" ||
-            resolution.outcome === "escalate" ||
-            resolution.outcome === "abandoned"
-          ) {
-            throw new Error("The spend gate requires an accepted commitment.");
-          }
-
+          const { current: _offline, pendingQuestion: _parked, ...rest } = context;
           return {
-            spend: context.spend,
-            spendBudget: context.spendBudget,
-            commitment: resolution.outcome,
+            ...rest,
+            backlog: [...integrated, ...planned],
+            planVersion: context.planVersion + 1,
+            attempts: 0,
+            findings: [],
           };
         },
       })
     ),
 
-    // Escalate harder problems or repeated failures into more capable actors.
+    // Selection is deterministic: the next pending item whose dependencies are
+    // integrated. No model call — judgment is reserved for judgment.
+    task(
+      "select",
+      assign(actors.Selector, {
+        input: (context) => ({ backlog: context.backlog }),
+        update: ({ context, output }) =>
+          output.outcome === "selected"
+            ? { ...context, current: output.itemId, attempts: 0, findings: [] }
+            : context,
+      })
+    ),
+
+    // The item pipeline. Harder items and repeated failure escalate to more
+    // capable workers; any worker can raise a question or a contradiction.
     task(
       "implement",
       assign(actors.TrivialImplementer, {
-        when: ({ context }) => context.complexity === "trivial",
-        input: (context) => accepted(context, "implement"),
-        update: charge,
+        when: ({ context }) => currentItem(context).complexity === "trivial",
+        ...implementationHooks(),
       }),
       assign(actors.Implementer, {
-        when: ({ context, meta }) => context.complexity === "standard" && meta.retryCount <= 2,
-        input: (context) => accepted(context, "implement"),
-        update: charge,
+        when: ({ context, meta }) =>
+          currentItem(context).complexity === "standard" && meta.retryCount <= 2,
+        ...implementationHooks(),
       }),
       assign(actors.SeniorImplementer, {
-        when: ({ context, meta }) => context.complexity === "complex" || meta.retryCount > 2,
-        input: (context) => accepted(context, "implement"),
-        update: charge,
+        when: ({ context, meta }) =>
+          currentItem(context).complexity === "complex" || meta.retryCount > 2,
+        ...implementationHooks(),
       })
     ),
 
-    // Reviews append to the history the stall detector and sticky simulations read.
+    // Review is unconditional after implementation — the quality floor is a
+    // property of the graph, not a scheduling decision.
     task(
       "review",
       assign(actors.Reviewer, {
-        when: ({ context }) => context.risk !== "high",
-        input: (context) => accepted(context, "review"),
-        update: ({ context, output }) => ({
-          ...charge({ context }),
-          reviewHistory: [
-            ...context.reviewHistory,
-            {
-              outcome: output.outcome,
-              notes: output.notes,
-              attempt: context.reviewHistory.length + 1,
-            },
-          ],
-        }),
+        when: ({ context }) => currentItem(context).risk !== "high",
+        ...reviewHooks(),
       }),
       assign(actors.AdversarialReviewer, {
-        when: ({ context }) => context.risk === "high",
-        input: (context) => accepted(context, "review"),
-        update: ({ context, output }) => ({
-          ...charge({ context }),
-          reviewHistory: [
-            ...context.reviewHistory,
-            {
-              outcome: output.outcome,
-              notes: output.notes,
-              attempt: context.reviewHistory.length + 1,
-            },
-          ],
-        }),
+        when: ({ context }) => currentItem(context).risk === "high",
+        ...reviewHooks(),
       })
     ),
 
-    // Verification independently certifies completion.
-    task(
-      "verify",
-      assign(actors.Verifier, {
-        input: (context) => accepted(context, "verify"),
-        update: charge,
-      })
-    ),
-
-    // Refinement applies accepted findings; triage sends it work directly, so
-    // its assignment falls back to the review findings when no refine
-    // commitment is on record.
     task(
       "refine",
       assign(actors.Refiner, {
-        input: (context) =>
-          context.resolution?.outcome === "refine"
-            ? context.resolution
-            : {
-                for: "refiner" as const,
-                objective: context.input.prompt,
-                artifacts: context.input.files,
-                focusAreas: [],
-                findings: context.reviewHistory
-                  .filter((review) => review.outcome === "changesRequested")
-                  .map((review) => review.notes),
-                exclusions: [],
-              },
-        update: charge,
+        input: (context) => ({ item: currentItem(context), findings: context.findings }),
+        update: ({ context, output }) =>
+          output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
       })
     ),
 
-    // Circuit-breakers
+    // Integration marks the item delivered and frees the line.
     task(
-      "stall-check",
-      assign(actors.StallDetector, {
-        input: (context) => ({ reviewHistory: context.reviewHistory }),
+      "integrate",
+      assign(actors.Integrator, {
+        input: (context) => ({ itemId: currentItem(context).id }),
+        update: ({ context }) => {
+          const { current: _delivered, ...rest } = context;
+          return {
+            ...rest,
+            backlog: context.backlog.map((item) =>
+              item.id === context.current ? { ...item, status: "integrated" as const } : item
+            ),
+            findings: [],
+            attempts: 0,
+          };
+        },
       })
     ),
 
-    // Self-healing/correction
+    // Verification runs once, when the backlog is exhausted.
+    task(
+      "verify",
+      assign(actors.Verifier, {
+        input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
+        update: ({ context, output }) =>
+          output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
+      })
+    ),
+
+    // Triage classifies accumulated failure evidence: fix one item, replan,
+    // or hand the run to the user.
     task(
       "triage",
       assign(actors.Triage, {
-        input: (context) => ({ reviewHistory: context.reviewHistory }),
+        input: (context) => ({
+          backlog: context.backlog,
+          current: context.current,
+          findings: context.findings,
+          reviewHistory: context.reviewHistory,
+          decisions: context.decisions,
+          planVersion: context.planVersion,
+          spend: context.spend,
+          spendBudget: context.spendBudget,
+        }),
+        update: ({ context, output }) =>
+          output.outcome === "fix-item"
+            ? {
+                ...context,
+                backlog: context.backlog.map((item) =>
+                  item.id === context.current
+                    ? { ...item, objective: output.revisedObjective }
+                    : item
+                ),
+                attempts: 0,
+                findings: [],
+              }
+            : context,
       })
     ),
 
-    // HITL: answers become durable decisions later planning and resolution can read.
+    // HITL: answers become durable decisions every later task can read.
     task(
-      "ask-user-question",
+      "ask-user",
       assign(actors.AskUserQuestion, {
-        input: (context) =>
-          context.resolution?.outcome === "ask-user"
-            ? { question: context.resolution.question, options: context.resolution.options }
-            : {
-                question: `The specification for "${context.input.prompt}" is ambiguous. How should the factory proceed?`,
-              },
-        update: ({ context, input, output }) => ({
-          ...context,
-          decisions: [...context.decisions, { question: input.question, answer: output.answer }],
+        input: (context) => ({
+          question:
+            context.pendingQuestion ??
+            `The plan for "${context.input.prompt}" is ambiguous. How should the factory proceed?`,
         }),
+        update: ({ context, input, output }) => {
+          const { pendingQuestion: _answered, ...rest } = context;
+          return {
+            ...rest,
+            decisions: [...context.decisions, { question: input.question, answer: output.answer }],
+          };
+        },
       })
     ),
     task(
       "user-review",
       assign(actors.UserReview, {
-        input: (context) => {
-          if (context.resolution?.outcome === "escalate") {
-            const { outcome: _escalate, ...request } = context.resolution;
-            return request;
-          }
+        input: (context) => ({
+          summary: `Spent ${context.spend} of ${context.spendBudget} on "${context.input.prompt}"; ${
+            context.backlog.filter((item) => item.status === "integrated").length
+          } of ${context.backlog.length} items integrated. Continue?`,
+        }),
+        // Continuing past an exhausted budget authorises another tranche;
+        // without it the budget guard would bounce the run straight back here.
+        update: ({ context, output }) =>
+          output.outcome === "continue" && context.spend >= context.spendBudget
+            ? { ...context, spendBudget: context.spend + 10 }
+            : context,
+      })
+    ),
 
-          return {
-            summary: `Spent ${context.spend} of ${context.spendBudget} on "${context.input.prompt}" over ${context.reviewHistory.length} reviews. Continue?`,
-          };
-        },
+    // Acceptance is the human authority boundary at the end of the line.
+    task(
+      "accept",
+      assign(actors.Acceptance, {
+        input: (context) => ({
+          summary: `All ${context.backlog.length} backlog items are integrated and verification passed for "${context.input.prompt}".`,
+          backlog: context.backlog,
+        }),
       })
     ),
   ],
   transitions: [
-    transition("plan", "resolve", { on: "planned" }),
+    transition("plan", "select", { on: "planned" }),
 
-    // Every new commitment crosses the spend gate. Authority boundaries go
-    // directly to a human.
-    transition("resolve", "spend-check", { on: "implement" }),
-    transition("resolve", "spend-check", { on: "review" }),
-    transition("resolve", "spend-check", { on: "verify" }),
-    transition("resolve", "spend-check", { on: "refine" }),
-    transition("resolve", "ask-user-question", { on: "ask-user" }),
-    transition("resolve", "user-review", { on: "escalate" }),
-    transition("resolve", "abandoned", { on: "abandoned" }),
+    // The budget gate is an edge, not a station: starting new work requires
+    // remaining budget, otherwise the user decides whether to fund more.
+    transition("select", "implement", {
+      on: "selected",
+      when: (context: Schema.Context) => context.spend < context.spendBudget,
+    }),
+    transition("select", "user-review", { on: "selected" }),
+    transition("select", "verify", { on: "exhausted" }),
+    transition("select", "triage", { on: "inconsistent" }),
 
-    // An accepted commitment is executed by exactly one capability.
-    transition("spend-check", "implement", { on: "implement" }),
-    transition("spend-check", "review", { on: "review" }),
-    transition("spend-check", "verify", { on: "verify" }),
-    transition("spend-check", "refine", { on: "refine" }),
-    transition("spend-check", "user-review", { on: "overBudget" }),
+    transition("implement", "review", { on: "implemented" }),
+    transition("implement", "ask-user", { on: "blocked" }),
+    transition("implement", "triage", { on: "contradiction" }),
 
-    // Material results are checked for progress before another commitment begins.
-    transition("implement", "stall-check", { on: "implemented" }),
-    transition("review", "stall-check", { on: "approved" }),
-    transition("review", "stall-check", { on: "changesRequested" }),
-    transition("refine", "stall-check", { on: "refined" }),
+    // The refine loop is bounded by the machine: endless review is
+    // unrepresentable, exhaustion becomes triage evidence.
+    transition("review", "integrate", { on: "approved" }),
+    transition("review", "refine", {
+      on: "changesRequested",
+      when: (context: Schema.Context) => context.attempts < MAX_REFINE_ATTEMPTS,
+    }),
+    transition("review", "triage", { on: "changesRequested" }),
+    transition("review", "triage", { on: "contradiction" }),
+
+    transition("refine", "review", { on: "refined" }),
+    transition("refine", "ask-user", { on: "blocked" }),
     transition("refine", "triage", { on: "contradiction" }),
-    transition("stall-check", "resolve", { on: "progressing" }),
-    transition("stall-check", "triage", { on: "stalled" }),
 
-    // Triage reopens the earliest decision invalidated by the contradiction.
-    transition("triage", "refine", { on: "minor-fix" }),
-    transition("triage", "plan", { on: "wrong-approach" }),
-    transition("triage", "ask-user-question", { on: "ambiguous-spec" }),
+    transition("integrate", "select", { on: "integrated" }),
+
+    transition("verify", "accept", { on: "passed" }),
+    transition("verify", "triage", { on: "failed" }),
+    transition("verify", "ask-user", { on: "blocked" }),
+
+    transition("triage", "select", { on: "fix-item" }),
+    transition("triage", "plan", { on: "replan" }),
     transition("triage", "user-review", { on: "escalate" }),
 
-    // Human answers feed resolution; a human review may end the run.
-    transition("ask-user-question", "resolve", { on: "answered" }),
-    transition("user-review", "resolve", { on: "continue" }),
+    transition("ask-user", "select", { on: "answered" }),
+    transition("user-review", "select", { on: "continue" }),
     transition("user-review", "abandoned", { on: "abandon" }),
 
-    // Verification certifies completion or reopens the earliest affected decision.
-    transition("verify", "done", { on: "passed" }),
-    transition("verify", "resolve", { on: "incomplete" }),
-    transition("verify", "triage", { on: "failed" }),
-    transition("verify", "user-review", { on: "escalate" }),
+    transition("accept", "done", { on: "accepted" }),
+    transition("accept", "triage", { on: "rejected" }),
   ],
 });
+
+function implementationHooks() {
+  return {
+    input: (context: Schema.Context) => ({
+      item: currentItem(context),
+      decisions: context.decisions,
+    }),
+    update: ({
+      context,
+      output,
+    }: {
+      context: Schema.Context;
+      output: Schema.ImplementationOutput;
+    }) =>
+      output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
+  };
+}
+
+function reviewHooks() {
+  return {
+    input: (context: Schema.Context) => {
+      const item = currentItem(context);
+      return { item, summary: `Work delivered for "${item.objective}"` };
+    },
+    update: ({ context, output }: { context: Schema.Context; output: Schema.ReviewOutput }) => {
+      const charged = charge(context);
+      if (output.outcome === "approved") {
+        return {
+          ...charged,
+          reviewHistory: [
+            ...context.reviewHistory,
+            {
+              itemId: currentItem(context).id,
+              outcome: "approved" as const,
+              notes: output.notes,
+              attempt: context.attempts + 1,
+            },
+          ],
+        };
+      }
+
+      if (output.outcome === "changesRequested") {
+        return {
+          ...charged,
+          attempts: context.attempts + 1,
+          findings: output.findings,
+          reviewHistory: [
+            ...context.reviewHistory,
+            {
+              itemId: currentItem(context).id,
+              outcome: "changesRequested" as const,
+              notes: output.findings.join("; "),
+              attempt: context.attempts + 1,
+            },
+          ],
+        };
+      }
+
+      return charged;
+    },
+  };
+}

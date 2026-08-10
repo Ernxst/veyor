@@ -1,17 +1,28 @@
 import { deterministic } from "@forge/core/actors";
 import * as actors from "../actors.ts";
 
-/** The spend gate is policy, not judgment: pass the commitment through or halt. */
-export const SpendGuard = deterministic(actors.SpendGuard, ({ input }) =>
-  input.spend >= input.spendBudget
-    ? { outcome: "overBudget" as const }
-    : { outcome: input.commitment }
-);
+/**
+ * Selection is scheduling, not judgment: the first pending item whose
+ * dependencies are all integrated. An unsatisfiable backlog is a deterministic
+ * signal that the plan itself is inconsistent.
+ */
+export const Selector = deterministic(actors.Selector, ({ input }) => {
+  const pending = input.backlog.filter((item) => item.status === "pending");
+  if (pending.length === 0) return { outcome: "exhausted" as const };
 
-/** Three consecutive rejections without an accepted change is a stall. */
-export const StallDetector = deterministic(actors.StallDetector, ({ input }) => {
-  const recent = input.reviewHistory.slice(-3);
-  return recent.length === 3 && recent.every((review) => review.outcome === "changesRequested")
-    ? { outcome: "stalled" as const, reason: "three consecutive rejections" }
-    : { outcome: "progressing" as const };
+  const integrated = new Set(
+    input.backlog.filter((item) => item.status === "integrated").map((item) => item.id)
+  );
+  const ready = pending.find((item) => item.dependsOn.every((dep) => integrated.has(dep)));
+  return ready !== undefined
+    ? { outcome: "selected" as const, itemId: ready.id }
+    : {
+        outcome: "inconsistent" as const,
+        reason: "no pending item has all of its dependencies integrated",
+      };
 });
+
+/** Integration is bookkeeping here; a delivery factory would merge the branch. */
+export const Integrator = deterministic(actors.Integrator, () => ({
+  outcome: "integrated" as const,
+}));

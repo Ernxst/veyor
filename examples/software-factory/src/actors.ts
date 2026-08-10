@@ -9,9 +9,9 @@ export const Planner = actor("planner", {
   context: Schema.Context,
 });
 
-export const Resolver = actor("resolver", {
-  input: schema(Schema.ResolutionRequest),
-  output: schema(Schema.Resolution),
+export const Selector = actor("selector", {
+  input: schema(Schema.SelectRequest),
+  output: schema(Schema.Selection),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });
@@ -51,13 +51,6 @@ export const AdversarialReviewer = actor("adversarialReviewer", {
   context: Schema.Context,
 });
 
-export const Verifier = actor("verifier", {
-  input: schema(Schema.VerificationAssignment),
-  output: schema(Schema.VerificationOutput),
-  aggregate: schema(Schema.TaskAggregate),
-  context: Schema.Context,
-});
-
 export const Refiner = actor("refiner", {
   input: schema(Schema.RefineAssignment),
   output: schema(Schema.RefineOutput),
@@ -65,22 +58,22 @@ export const Refiner = actor("refiner", {
   context: Schema.Context,
 });
 
-export const StallDetector = actor("stallDetector", {
-  input: schema(Schema.StallCheckInput),
-  output: schema(Schema.StallCheckOutput),
+export const Integrator = actor("integrator", {
+  input: schema(Schema.IntegrationRequest),
+  output: schema(Schema.IntegrationOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });
 
-export const SpendGuard = actor("spendGuard", {
-  input: schema(Schema.SpendCheckInput),
-  output: schema(Schema.SpendCheckOutput),
+export const Verifier = actor("verifier", {
+  input: schema(Schema.VerificationRequest),
+  output: schema(Schema.VerificationOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });
 
 export const Triage = actor("triage", {
-  input: schema(Schema.TriageInput),
+  input: schema(Schema.TriageRequest),
   output: schema(Schema.TriageOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
@@ -96,6 +89,13 @@ export const AskUserQuestion = actor("askUserQuestion", {
 export const UserReview = actor("userReview", {
   input: schema(Schema.UserReviewInput),
   output: schema(Schema.UserReviewOutput),
+  aggregate: schema(Schema.TaskAggregate),
+  context: Schema.Context,
+});
+
+export const Acceptance = actor("acceptance", {
+  input: schema(Schema.AcceptanceRequest),
+  output: schema(Schema.AcceptanceOutput),
   aggregate: schema(Schema.TaskAggregate),
   context: Schema.Context,
 });

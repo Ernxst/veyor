@@ -1,56 +1,50 @@
 import { claude } from "@forge/anthropic/claude";
 import { assemble } from "@forge/core";
-import { prompt, question, review } from "@forge/core/actors";
+import { acceptance, prompt, question, review } from "@forge/core/actors";
 import { codex } from "@forge/openai/codex";
 import * as actors from "../actors.ts";
-import { MySoftwareFactoryBlueprint } from "../machine.ts";
+import { DeliveryBlueprint } from "../machine.ts";
 import * as policy from "./policy.ts";
 
-export default assemble(
-  MySoftwareFactoryBlueprint,
+const implementerInstructions = `
+Execute only the assigned backlog item, honouring its acceptance criteria and the recorded
+user decisions. Preserve unrelated work, compatibility, and recoverability. If the item is
+ambiguous in a way only the user can resolve, report blocked with the question; if it
+conflicts with the plan, report a contradiction. Do not expand scope or certify completion.
+`;
 
-  // Decision ownership
+export default assemble(
+  DeliveryBlueprint,
+
+  // Planning owns the model of the work: a backlog of items with acceptance
+  // criteria and dependencies. On a replan it receives the current backlog
+  // and the accumulated decisions as evidence.
   codex(actors.Planner, "gpt-5.6-sol", {
     effort: "xhigh",
     instructions: `
-Investigate the task and repository evidence, then model the problem before proposing work.
-Produce the smallest coherent sequence of commitments and identify the evidence required to validate each one.
-Do not implement, review, or claim completion.
-`,
-  }),
-  codex(actors.Resolver, "gpt-5.6-terra", {
-    effort: "medium",
-    instructions: `
-Select exactly one next coherent commitment from the accepted plan, current evidence, unresolved obligations, and authority boundaries.
-Route unresolved user-owned decisions to a human and propose verification only when every execution obligation appears complete.
-Do not implement, review, or certify completion.
+Investigate the task and repository evidence, then decompose the work into a backlog of
+independent items with explicit acceptance criteria, dependencies, complexity, and risk.
+On a replan, preserve the intent of integrated items and revise only what the evidence
+invalidates. Do not implement, review, or claim completion.
 `,
   }),
 
-  // Execution
+  // Scheduling and integration are deterministic policy, not judgment.
+  policy.Selector,
+  policy.Integrator,
+
+  // Execution: harder items and repeated failure escalate to more capable workers.
   codex(actors.TrivialImplementer, "gpt-5.3-spark", {
     effort: "xhigh",
-    instructions: `
-Execute only the accepted commitment in the assignment.
-Preserve its constraints, unrelated work, compatibility, and recoverability, and produce the observable artifacts required by its proof obligations.
-Do not expand scope, perform independent review, or certify completion.
-`,
+    instructions: implementerInstructions,
   }),
   codex(actors.Implementer, "gpt-5.6-terra", {
     effort: "high",
-    instructions: `
-Execute only the accepted commitment in the assignment.
-Preserve its constraints, unrelated work, compatibility, and recoverability, and produce the observable artifacts required by its proof obligations.
-Do not expand scope, perform independent review, or certify completion.
-`,
+    instructions: implementerInstructions,
   }),
   codex(actors.SeniorImplementer, "gpt-5.6-sol", {
     effort: "high",
-    instructions: `
-Execute only the accepted commitment in the assignment.
-Preserve its constraints, unrelated work, compatibility, and recoverability, and produce the observable artifacts required by its proof obligations.
-Do not expand scope, perform independent review, or certify completion.
-`,
+    instructions: implementerInstructions,
   }),
 
   // Independent evaluation — a different vendor than the implementers, so the
@@ -59,8 +53,9 @@ Do not expand scope, perform independent review, or certify completion.
     effort: "high",
     permissionMode: "dontAsk",
     instructions: `
-Review the assigned commitment against its accepted requirements and engineering quality bar.
-Find concrete defects in correctness, design, compatibility, maintainability, or scope using observable artifacts rather than the implementer's conclusions.
+Review the delivered item against its acceptance criteria and engineering quality bar.
+Find concrete defects using observable artifacts rather than the implementer's conclusions.
+If the item as specified conflicts with the plan, report a contradiction instead of findings.
 Do not modify the work or decide whether the overall task is complete.
 `,
   }),
@@ -68,17 +63,9 @@ Do not modify the work or decide whether the overall task is complete.
     effort: "xhigh",
     permissionMode: "dontAsk",
     instructions: `
-Independently challenge the assigned high-risk commitment.
-Generate the smallest set of rival failure explanations that could materially change acceptance, then seek observable evidence capable of falsifying the implementation's claims.
-Report concrete findings only. Do not modify the work or decide whether the overall task is complete.
-`,
-  }),
-  codex(actors.Verifier, "gpt-5.6-terra", {
-    effort: "high",
-    instructions: `
-Audit the proposed completion of the overall task.
-Determine whether every accepted obligation has claim-matched evidence, every required review is present, all material findings are resolved, authority boundaries were respected, and the repository is coherent.
-Do not repeat a general engineering review or repair missing work. Reject absent, contradictory, stale, or proxy evidence and identify the earliest workflow stage that must reopen.
+Independently challenge this high-risk item. Generate the smallest set of rival failure
+explanations that could materially change acceptance, then seek observable evidence capable
+of falsifying the implementation's claims. Report concrete findings only.
 `,
   }),
 
@@ -86,9 +73,21 @@ Do not repeat a general engineering review or repair missing work. Reject absent
   codex(actors.Refiner, "gpt-5.6-terra", {
     effort: "high",
     instructions: `
-Apply only the accepted findings in the assignment while preserving unaffected decisions and work.
-If evidence shows that a finding invalidates the accepted approach rather than requiring a local correction, stop and report the contradiction instead of patching around it.
-Do not broaden the redesign or certify completion.
+Apply only the accepted findings while preserving unaffected decisions and work.
+If evidence shows a finding invalidates the item's approach rather than requiring a local
+correction, report a contradiction instead of patching around it. If a finding cannot be
+resolved without a user-owned decision, report blocked with the question.
+`,
+  }),
+
+  // Verification certifies the whole delivery, once, against the plan.
+  codex(actors.Verifier, "gpt-5.6-terra", {
+    effort: "high",
+    instructions: `
+Audit the completed backlog against the original task. Determine whether every item's
+acceptance criteria have claim-matched evidence and the delivery is coherent as a whole.
+Reject absent, contradictory, stale, or proxy evidence with the specific gaps as evidence.
+Do not repair missing work.
 `,
   }),
 
@@ -96,24 +95,15 @@ Do not broaden the redesign or certify completion.
   codex(actors.Triage, "gpt-5.6-sol", {
     effort: "high",
     instructions: `
-Diagnose why progress stopped or the same class of failure recurred.
-Identify the earliest invalid assumption and classify whether the run needs a minor correction, a new plan, or a user-owned decision.
-Do not implement a fix, defend the current approach, or certify completion.
+Diagnose why progress stopped: classify whether the failing item needs respecification
+(fix-item, with a revised objective), the plan itself is invalid (replan), or the situation
+requires a user-owned decision (escalate). Identify the earliest invalid assumption.
+Do not implement a fix or defend the current approach.
 `,
   }),
-
-  // Circuit breakers
-  codex(actors.StallDetector, "gpt-5.6-terra", {
-    effort: "medium",
-    instructions: `
-Compare the current state with prior attempts and review history.
-Report stalled only when the run is repeating the same issue class or producing no decision-relevant evidence; report progressing when a material uncertainty, obligation, or finding has changed.
-Do not repair the work or reinterpret the accepted plan.
-`,
-  }),
-  policy.SpendGuard,
 
   // Human authority boundaries
   prompt(actors.AskUserQuestion, { format: question() }),
-  prompt(actors.UserReview, { format: review() })
+  prompt(actors.UserReview, { format: review() }),
+  prompt(actors.Acceptance, { format: acceptance() })
 );

@@ -1,62 +1,109 @@
-# Software factory example
+# Software delivery factory example
 
-This example models a multi-stage software factory with Forge. It is the broadest statement of the library's intended shape: one typed workflow, assembled with different kinds of workers.
+This example models an autonomous software **delivery** factory with Forge: one typed blueprint that takes a task from plan to accepted delivery, assembled with different kinds of workers.
 
 > [!IMPORTANT]
-> The probabilistic assembly runs end to end — see the Monte Carlo script below. The LLM assembly type-checks against the same blueprint but shells out to the Codex CLI, and `forge run` is not implemented.
+> The probabilistic assembly runs end to end — see the Monte Carlo script below. The LLM assembly type-checks against the same blueprint but shells out to the Codex and Claude Code CLIs, and `forge run` is not implemented.
 
-## What it models
+## The shape: an assembly line, not a dispatch hub
 
-The blueprint in [`src/machine.ts`](./src/machine.ts) includes:
+The blueprint in [`src/machine.ts`](./src/machine.ts) is an assembly line over a planned backlog. Work flows through a fixed per-item pipeline; exceptions drain into a triage funnel; humans sit at explicit authority boundaries.
 
-- planning and dispatch;
-- implementation, review, QA, and refinement;
-- different workers for different complexity and risk;
-- stall and spend circuit breakers;
-- triage and recovery paths;
-- explicit user questions and review;
-- `done` and `abandoned` terminal tasks.
+```mermaid
+stateDiagram-v2
+  state "ask-user" as askUser
+  state "user-review" as userReview
 
-Actor contracts live in [`src/actors.ts`](./src/actors.ts). Shared Effect Schemas live in [`src/schema.ts`](./src/schema.ts).
+  [*] --> plan
+  plan --> select : planned
+  select --> implement : selected [budget left]
+  select --> userReview : selected [over budget]
+  select --> verify : exhausted
+  select --> triage : inconsistent
+
+  implement --> review : implemented
+  review --> integrate : approved
+  review --> refine : changesRequested [attempts < 3]
+  review --> triage : changesRequested [stalled]
+  refine --> review : refined
+  integrate --> select : integrated
+
+  verify --> accept : passed
+  verify --> triage : failed
+  accept --> done : accepted
+  accept --> triage : rejected
+
+  triage --> select : fix item
+  triage --> plan : replan
+  triage --> userReview : escalate
+
+  askUser --> select : answered
+  userReview --> select : continue
+  userReview --> abandoned : abandon
+
+  implement --> askUser : blocked
+  refine --> askUser : blocked
+  verify --> askUser : blocked
+  implement --> triage : contradiction
+  refine --> triage : contradiction
+  review --> triage : contradiction
+
+  done --> [*]
+  abandoned --> [*]
+```
+
+The design rests on a handful of commitments:
+
+- **LLM judgment is spent only where judgment exists.** Planning, implementing, reviewing, refining, verifying, and triage are model calls. Scheduling (`select`) and integration are deterministic policy in [`src/factories/policy.ts`](./src/factories/policy.ts) — picking the next ready backlog item is not a judgment call, so no tokens are spent on it.
+- **Quality is a property of the graph.** Review is unconditional after every implementation. No scheduler — model or otherwise — can skip it, and nothing needs a prompt to enforce it.
+- **Loops are bounded by the machine.** The refine loop carries a guard (`attempts < 3`); its exhaustion is not an error but _evidence_, routed to triage. Endless review is unrepresentable.
+- **Policy lives on edges, not stations.** The spend budget is a guarded transition out of `select` with a human fallback, not a task on the line. Stall detection dissolved into the refine bound entirely.
+- **Friction is ambient, discretion is not.** Any working actor can report `blocked` (a question for the user) or `contradiction` (the work conflicts with the plan). Escape hatches are always reachable as _outcomes_, but never offered to a scheduler as _choices_.
+- **Replanning is a funnel, not a whim.** Evidence of model-wrongness — refine exhaustion, contradictions, verification failure, an inconsistent backlog — drains into `triage`, which classifies once: fix one item, replan, or escalate to the human. A replan **amends** the backlog; integrated work is preserved.
+- **Humans hold three boundaries:** questions (`ask-user`), funding and continuation (`user-review`), and final acceptance (`accept`). Answers persist as `decisions` that every later task reads.
+
+## What this architecture is best for
+
+**Spec'd delivery**: work that decomposes up front into items with acceptance criteria and dependencies — exactly the regime of a repository with a product spec and an accepted implementation order. Its goals are controlled shipping velocity, an enforced quality floor, bounded rework, and predictable token spend. Throughput is measurable (items integrated per budget unit) because the pipeline is fixed.
+
+**What it is not best for**: open-ended exploration — research, debugging an unknown failure, work whose next step genuinely cannot be enumerated. There, a fixed pipeline fights the problem; a dispatch-hub topology (a resolver choosing the next capability each cycle) buys adaptability at the cost of tokens and structural looseness. The right response to that regime is a different blueprint over the same actors, not a looser version of this one. This machine also runs one item at a time by design; parallelism belongs at the assembly level (several factories over a shared backlog), not inside the blueprint.
+
+## Why it beats the alternatives at delivery
+
+- **vs. a dispatch hub** (this example's own previous shape): the hub re-decides "what kind of work happens next" with a planning-grade model call every cycle, quality is enforced by prompt rather than structure, and `resolve → review → resolve → review` is a legal walk. The line deletes the per-cycle scheduling call, makes review non-optional, and makes endless review unrepresentable. Same actors, roughly a third the transitions per item, and the two policy stations the hub needed (spend guard, stall detector) become a guard and a bound.
+- **vs. a single agent loop**: one agent with tools owns control flow implicitly — there is no enforceable quality floor, no bounded rework, no typed contract on any step, and nothing to simulate. The blueprint makes the process durable and the workers disposable.
+- **vs. a static script or CI pipeline**: a script has the discipline but no judgment — it cannot triage its own failure evidence, respec an item, or replan while preserving delivered work. The line keeps deterministic discipline where the work is deterministic and buys judgment only at the stations that need it.
+- **vs. free multi-agent orchestration**: agent swarms negotiate control flow in conversation, which is unbounded in tokens and unverifiable in structure. Here coordination _is_ the state machine; the Monte Carlo below prices the whole topology before a single model call.
 
 ## One blueprint, two assemblies
 
-The example keeps workflow design separate from worker choice.
-
 ### Probabilistic assembly
 
-[`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) replaces expensive or unavailable workers with generated outcomes and configured failure rates. Reviews model correlated failure — each consecutive rejection raises the odds of another — so the stall detector observes realistic streaks. Deterministic code in [`src/factories/policy.ts`](./src/factories/policy.ts) owns the spend gate and stall policy for both assemblies.
+[`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) runs the line against a fixed six-item backlog (a dependency chain of mixed complexity and risk) with seeded probabilistic workers. Reviews model correlated failure — each refine attempt raises the odds of another rejection — so the bounded refine loop has something real to bound. Deterministic policy owns scheduling and integration for both assemblies.
 
-Run the Monte Carlo script to sample the blueprint's routes without a single model call:
+Run the Monte Carlo:
 
 ```sh
-bun scripts/probabilistic.ts
+bun run simulate
 ```
 
-It runs 500 seeded, reproducible simulations and prints the terminal-outcome distribution and mean spend.
+At 10,000 seeded runs with a budget of 25 work units: **92% delivered**, ~8% abandoned, a mean spend of ~20, ~5.9 of 6 items integrated, and ~0.4 replans per run. The budget is a visible lever: most abandonment at budget 25 is the spend gate converting overrun tail-risk into human decisions — at budget 35 abandonment drops to ~3% while mean spend stays ~20, showing the demand is ~20 with a refine-variance tail rather than runaway cost.
 
 ### LLM assembly
 
-[`src/factories/llm.ts`](./src/factories/llm.ts) assigns Codex models to planning, dispatch, implementation, verification, refinement, and triage, and Claude Code to review — independent evaluation deliberately runs on a different vendor than the implementers so it does not share their blind spots. Deterministic code keeps the spend boundary, while terminal prompts keep user-owned decisions with the user.
+[`src/factories/llm.ts`](./src/factories/llm.ts) assigns Codex models to planning, implementation (an escalation ladder by item complexity and retry count), refinement, verification, and triage; Claude Code reviews — independent evaluation deliberately runs on a different vendor than the implementers so it does not share their blind spots. Deterministic policy keeps scheduling and integration; terminal prompts keep questions, funding, and acceptance with the user.
 
-Both implementations satisfy the same actor contracts and assemble the same `MySoftwareFactoryBlueprint`.
-
-## Type-check the example
-
-From the repository root:
-
-```sh
-./node_modules/.bin/tsc -b examples/software-factory/tsconfig.json --noEmit
-```
+Both assemblies satisfy the same actor contracts and assemble the same `DeliveryBlueprint`.
 
 ## Read the example
 
 Start in this order:
 
-1. [`src/schema.ts`](./src/schema.ts) — shared domain and boundary contracts.
+1. [`src/schema.ts`](./src/schema.ts) — the backlog model, ambient `blocked`/`contradiction` outcomes, and boundary contracts.
 2. [`src/actors.ts`](./src/actors.ts) — named capabilities and their typed inputs and outputs.
-3. [`src/machine.ts`](./src/machine.ts) — tasks, assignment policies, and allowed transitions.
-4. [`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) — low-cost simulation assembly.
-5. [`src/factories/llm.ts`](./src/factories/llm.ts) — Codex, deterministic, and human implementations.
+3. [`src/machine.ts`](./src/machine.ts) — the line, its guards, and how updates fold evidence into context.
+4. [`src/factories/policy.ts`](./src/factories/policy.ts) — deterministic scheduling and integration.
+5. [`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) — the simulation assembly.
+6. [`src/factories/llm.ts`](./src/factories/llm.ts) — Codex, Claude Code, deterministic, and human implementations.
 
 See the [`@forge/core` README](../../packages/core) for the library model and the [Forge README](../../README.md) for the project overview and prior work.

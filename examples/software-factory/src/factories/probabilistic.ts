@@ -1,120 +1,133 @@
 import { assemble } from "@forge/core";
-import { probabilistic, type OutcomeWeights } from "@forge/core/actors";
+import { deterministic, probabilistic, type OutcomeWeights } from "@forge/core/actors";
 import * as actors from "../actors.ts";
-import { MySoftwareFactoryBlueprint } from "../machine.ts";
+import { DeliveryBlueprint } from "../machine.ts";
 import type * as Schema from "../schema.ts";
 import * as policy from "./policy.ts";
 
 /**
+ * A fixed synthetic backlog so the simulation exercises flow dynamics —
+ * dependencies, escalation, bounded refinement, replanning — rather than
+ * random plans. All randomness comes from the workers.
+ */
+const SIMULATED_BACKLOG: readonly Schema.PlannedItem[] = [
+  itemOf("scaffold", [], "trivial", "low"),
+  itemOf("domain-model", ["scaffold"], "standard", "medium"),
+  itemOf("persistence", ["domain-model"], "standard", "medium"),
+  itemOf("api", ["persistence"], "standard", "medium"),
+  itemOf("sync-engine", ["api"], "complex", "high"),
+  itemOf("docs", ["api"], "trivial", "low"),
+];
+
+/**
  * A cheap, seeded stand-in for the LLM factory: same blueprint, no models.
- * Reviews model correlated failure — each consecutive rejection raises the
- * odds of another — so the deterministic stall detector has something real
- * to observe.
+ * Reviews model correlated failure — each refine attempt raises the odds of
+ * another rejection — so the machine's bounded refine loop has something
+ * real to bound.
  */
 export default function factory(seed: number) {
   return assemble(
-    MySoftwareFactoryBlueprint,
+    DeliveryBlueprint,
 
-    // Autonomous
-    probabilistic(actors.Planner, { seed: seed + 1, failureRate: 0.02 }),
-    probabilistic(actors.Resolver, {
-      seed: seed + 2,
-      outcomes: ({ context }) => resolverWeights(context),
-    }),
-    probabilistic(actors.TrivialImplementer, { seed: seed + 3, failureRate: 0.1 }),
-    probabilistic(actors.Implementer, { seed: seed + 4, failureRate: 0.1 }),
-    probabilistic(actors.SeniorImplementer, { seed: seed + 5, failureRate: 0.03 }),
-    probabilistic(actors.Reviewer, {
-      seed: seed + 6,
-      outcomes: sticky({ approved: 0.8, changesRequested: 0.2 }),
-    }),
-    probabilistic(actors.AdversarialReviewer, {
-      seed: seed + 7,
-      outcomes: sticky({ approved: 0.5, changesRequested: 0.5 }),
-    }),
-    probabilistic(actors.Verifier, {
-      seed: seed + 8,
-      outcomes: { passed: 0.6, incomplete: 0.25, failed: 0.1, escalate: 0.05 },
-    }),
-    probabilistic(actors.Refiner, {
-      seed: seed + 9,
-      outcomes: { refined: 0.9, contradiction: 0.1 },
-    }),
+    // Planning is deterministic in simulation; the merge-on-replan semantics
+    // in the blueprint's update are what get exercised.
+    deterministic(actors.Planner, () => ({
+      outcome: "planned" as const,
+      backlog: SIMULATED_BACKLOG,
+    })),
 
     // Deterministic policy shared with the LLM factory
-    policy.SpendGuard,
-    policy.StallDetector,
+    policy.Selector,
+    policy.Integrator,
 
-    // Self-healing/correction
+    // Workers
+    probabilistic(actors.TrivialImplementer, {
+      seed: seed + 1,
+      failureRate: 0.05,
+      outcomes: { implemented: 0.96, blocked: 0.02, contradiction: 0.02 },
+    }),
+    probabilistic(actors.Implementer, {
+      seed: seed + 2,
+      failureRate: 0.08,
+      outcomes: { implemented: 0.92, blocked: 0.05, contradiction: 0.03 },
+    }),
+    probabilistic(actors.SeniorImplementer, {
+      seed: seed + 3,
+      failureRate: 0.03,
+      outcomes: { implemented: 0.95, blocked: 0.03, contradiction: 0.02 },
+    }),
+    probabilistic(actors.Reviewer, {
+      seed: seed + 4,
+      outcomes: sticky({ approved: 0.75, changesRequested: 0.24, contradiction: 0.01 }),
+    }),
+    probabilistic(actors.AdversarialReviewer, {
+      seed: seed + 5,
+      outcomes: sticky({ approved: 0.53, changesRequested: 0.45, contradiction: 0.02 }),
+    }),
+    probabilistic(actors.Refiner, {
+      seed: seed + 6,
+      outcomes: { refined: 0.9, blocked: 0.04, contradiction: 0.06 },
+    }),
+    probabilistic(actors.Verifier, {
+      seed: seed + 7,
+      outcomes: { passed: 0.8, failed: 0.15, blocked: 0.05 },
+    }),
+
+    // Self-healing/correction: an item fix is only possible with an item on the line.
     probabilistic(actors.Triage, {
-      seed: seed + 10,
-      outcomes: { "minor-fix": 0.5, "wrong-approach": 0.25, "ambiguous-spec": 0.15, escalate: 0.1 },
+      seed: seed + 8,
+      outcomes: ({ context }) =>
+        context.current === undefined
+          ? { replan: 0.7, escalate: 0.3 }
+          : { "fix-item": 0.6, replan: 0.25, escalate: 0.15 },
     }),
 
     // HITL, simulated
-    probabilistic(actors.AskUserQuestion, { seed: seed + 11, outcomes: { answered: 1 } }),
+    probabilistic(actors.AskUserQuestion, { seed: seed + 9, outcomes: { answered: 1 } }),
     probabilistic(actors.UserReview, {
-      seed: seed + 12,
+      seed: seed + 10,
       outcomes: ({ context }) => userReviewWeights(context),
+    }),
+    probabilistic(actors.Acceptance, {
+      seed: seed + 11,
+      outcomes: { accepted: 0.92, rejected: 0.08 },
     })
   );
 }
 
-/**
- * Abandonment is evidence-driven, not memoryless. A flat per-decision quit
- * weight compounds over a run's many resolve cycles into implausible run-level
- * abandonment (a constant 2% per decision abandons ~19% of runs); a resolver
- * only quits under sustained distress.
- */
-function resolverWeights(context: Schema.Context): OutcomeWeights {
-  if (context.resolution === undefined) return { implement: 1 };
-
-  const distress = distressLevel(context);
+function itemOf(
+  id: string,
+  dependsOn: readonly string[],
+  complexity: Schema.PlannedItem["complexity"],
+  risk: Schema.PlannedItem["risk"]
+): Schema.PlannedItem {
   return {
-    implement: 0.25,
-    review: 0.3,
-    verify: 0.2,
-    refine: 0.15,
-    "ask-user": 0.02 + 0.08 * distress,
-    escalate: 0.01 + 0.09 * distress,
-    abandoned: 0.1 * distress ** 2,
+    id,
+    objective: `Deliver the ${id.replace(/-/g, " ")}`,
+    acceptanceCriteria: [`${id} satisfies its contract`],
+    dependsOn,
+    complexity,
+    risk,
   };
 }
 
-/** A human waves work through when it is healthy and pulls the plug when it is not. */
+/** Each refine attempt on the current item raises the odds of another rejection. */
+function sticky(base: OutcomeWeights & { changesRequested: number }) {
+  return ({ context }: { context: Schema.Context }): OutcomeWeights => ({
+    ...base,
+    changesRequested: base.changesRequested * (1 + context.attempts),
+  });
+}
+
+/** A human waves healthy work through and pulls the plug on distressed runs. */
 function userReviewWeights(context: Schema.Context): OutcomeWeights {
   const overBudget = context.spend >= context.spendBudget;
   const abandon = overBudget ? 0.5 : 0.02 + 0.28 * distressLevel(context);
   return { continue: 1 - abandon, abandon };
 }
 
-/**
- * How troubled this run looks: 0 for a healthy run, 1 for one deep in
- * consecutive rejections or burning through its budget.
- */
+/** 0 for a healthy run, 1 for one deep in refine attempts or burning budget. */
 function distressLevel(context: Schema.Context): number {
-  const streak = rejectionStreak(context.reviewHistory);
   const spendFraction = context.spend / context.spendBudget;
-  return Math.min(1, streak / 4 + Math.max(0, spendFraction - 0.5));
-}
-
-/** Each consecutive rejection multiplies the odds of the next one. */
-function sticky(base: { approved: number; changesRequested: number }) {
-  return ({ context }: { context: Schema.Context }): OutcomeWeights => {
-    const streak = rejectionStreak(context.reviewHistory);
-    return {
-      approved: base.approved,
-      changesRequested: base.changesRequested * (1 + streak),
-    };
-  };
-}
-
-function rejectionStreak(history: Schema.Context["reviewHistory"]): number {
-  let streak = 0;
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i]?.outcome !== "changesRequested") break;
-    streak++;
-  }
-
-  return streak;
+  return Math.min(1, context.attempts / 4 + Math.max(0, spendFraction - 0.5));
 }
