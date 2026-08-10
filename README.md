@@ -1,0 +1,136 @@
+# Forge
+
+Forge is a TypeScript library for describing software factories as typed workflow blueprints with replaceable workers.
+
+A Forge blueprint describes the work: its context, tasks, transitions, actors, and runtime contracts. An assembly supplies the workers. The same blueprint can use deterministic functions, terminal prompts, AI models, Codex agents, or probabilistic stand-ins without changing the workflow itself.
+
+That split is Forge's core idea: design the factory before choosing the cost, capability, and autonomy of its workers.
+
+> [!IMPORTANT]
+> Forge is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, and runner exist and run end to end, but history, aggregation, and the workflow CLI are not implemented. Treat the repository as a working library, not a production release.
+
+## Why Forge?
+
+An honest framing first: typed, state-machine-constrained agents are not new — [`statelyai/agent`](https://github.com/statelyai/agent) established that idea, and Forge borrows it openly. Forge's own claim is narrower and specific. Two things distinguish it:
+
+1. **The actor contract is the unit of substitution.** A blueprint names capabilities with typed context, input, and output schemas — never workers. The same actor can be filled by deterministic code, a human at a terminal, an Anthropic or OpenAI model, a Claude Code or Codex CLI session, or a seeded simulator, chosen per assembly without touching the workflow. Agent frameworks generally fix the worker kind (a model) and vary the prompt; Forge varies the worker.
+2. **Simulation is a first-class assembly, not a mock.** Because outputs are schema-typed and routing is outcome-driven, seeded probabilistic actors can generate contract-valid outputs — including context-correlated failure like rejection streaks — and drive the real machine through its real transitions. You can Monte Carlo a workflow's outcome distribution and spend profile before paying for a single model call or human hour.
+
+The supporting choices serve those two ideas:
+
+- **Blueprints own control flow.** Tasks and transitions form a typed state machine, currently compiled to XState.
+- **Assemblies own execution choices.** A blueprint is complete only when every actor has an implementation, checked at compile time.
+- **Schemas stay at the boundary.** Standard Schema contracts, with adapters for Effect Schema, TypeBox, and Valibot, validated at runtime.
+
+The result is a factory-first library: the durable artifact is the workflow and its contracts, not a prompt, provider, terminal layout, or one agent loop. If you only need a model constrained by a state machine, use Stately Agent; Forge earns its place when you need the same workflow to survive changes in who — or what — does the work.
+
+## Core model
+
+| Concept      | Purpose                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| `actor`      | Names a capability and defines its context, input, output, and aggregate contracts.                 |
+| `task`       | Assigns one or more actors to a step in the workflow.                                               |
+| `assign`     | Attaches an actor to a task, optionally behind a routing condition.                                 |
+| `transition` | Defines the allowed path between tasks.                                                             |
+| `machine`    | Combines context, tasks, and transitions into a reusable blueprint.                                 |
+| `assemble`   | Binds every actor in a blueprint to a concrete implementation and creates a factory implementation. |
+
+Every actor output must contain an `outcome: string`. Define `outcome` with a literal or literal union in the output schema so Forge can constrain each task's transitions to the outcomes its actors declare.
+
+## Implementation status
+
+Implemented today:
+
+- typed actors, tasks, transitions, machines, and complete assembly checks;
+- deterministic, probabilistic, and terminal-prompt actor implementations;
+- Effect AI, Anthropic, OpenAI, Claude Code, and Codex adapters;
+- Standard Schema adapters and actor-output validation;
+- an XState compiler with task input derivation, actor-output updates to machine context, and context-aware selection between several assignments;
+- per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
+- `Factory.run(...)` validating the initial context and resolving with the final sink and context;
+- seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and its Monte Carlo script).
+
+Not implemented:
+
+- run history, aggregation, and richer retry metadata;
+- a machine invoking another machine (or itself) as a task;
+- the `forge run` workflow CLI.
+
+## Example
+
+This small factory has one typed actor and one deterministic implementation:
+
+```ts
+import { actor, assemble, assign, machine, sink, task, transition } from "@forge/core";
+import { deterministic } from "@forge/core/actors";
+import { schema } from "@forge/core/schema/effect";
+import * as Schema from "effect/Schema";
+
+const Context = schema(Schema.Struct({ objective: Schema.String }));
+const Empty = schema(Schema.Struct({}));
+const PlanOutput = schema(
+  Schema.Struct({ outcome: Schema.Literal("planned"), summary: Schema.String })
+);
+
+const Planner = actor("planner", {
+  context: Context,
+  input: Empty,
+  output: PlanOutput,
+  aggregate: Empty,
+});
+
+const Blueprint = machine({
+  id: "planning-factory",
+  initial: "plan",
+  context: Context,
+  tasks: [task("plan", assign(Planner)), sink("done")],
+  transitions: [transition("plan", "done", { on: "planned" })],
+});
+
+const Factory = assemble(
+  Blueprint,
+  deterministic(Planner, ({ context }) => ({
+    outcome: "planned",
+    summary: `Plan: ${context.objective}`,
+  }))
+);
+
+Factory.run({ objective: "Ship a typed workflow" });
+```
+
+For the full design, see the [software factory example](./examples/software-factory). It assembles one blueprint in two ways:
+
+- a low-cost probabilistic factory for exercising routes and outcomes;
+- an LLM factory that mixes Codex workers, deterministic policy, and human approval.
+
+## Packages
+
+| Package                                    | Role                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| [`@forge/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters. |
+| [`@forge/ai-effect`](./packages/ai-effect) | Effect AI language models as Forge actors.                                   |
+| [`@forge/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Forge actors.          |
+| [`@forge/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Forge actors.                   |
+
+The repository also contains an experimental [`@forge/cli`](./packages/cli), but it does not run Forge workflows yet.
+
+## Prior work
+
+Forge builds on two projects that solve adjacent parts of the same problem:
+
+- [`swarm-forge`](https://github.com/unclebob/swarm-forge/tree/squad) is a local, tmux-based orchestration system. It contributes the software-factory framing: named roles, separate worktrees, explicit handoffs, project-level rules, and observable multi-agent work. Forge moves that topology into an embeddable, typed library and adds contract-driven simulation.
+- [`statelyai/agent`](https://github.com/statelyai/agent) makes an XState machine own an LLM agent's control flow while the model can choose only legal events. Forge keeps that state-machine discipline, then makes the worker behind each typed actor replaceable. A worker can be a model, a human, deterministic code, or a simulator.
+
+In short, SwarmForge orchestrates agent terminals and Stately Agent constrains model-driven agents. Forge defines portable software factories whose workflow can be assembled, simulated, and run with different kinds of workers.
+
+## Development
+
+This is a Bun monorepo. The repository pins the supported Bun and Node.js versions.
+
+```sh
+bun install --frozen-lockfile
+bun run check
+bun run test
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the contribution workflow.
