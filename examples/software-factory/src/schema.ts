@@ -50,6 +50,8 @@ const ContextStruct = Schema.Struct({
   current: Schema.optional(Schema.String),
   /** Refine cycles consumed by the current item. */
   attempts: Schema.Number,
+  /** Risk points integrated since the last verification. */
+  unverifiedRisk: Schema.Number,
   /** Model-grade spend consumed by the current item. */
   itemSpend: Schema.Number,
   /** Whether the current item has already been re-implemented from scratch. */

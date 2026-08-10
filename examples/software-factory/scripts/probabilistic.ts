@@ -8,6 +8,7 @@ const context: Schema.Context = {
   backlog: [],
   planVersion: 0,
   attempts: 0,
+  unverifiedRisk: 0,
   itemSpend: 0,
   reworked: false,
   findings: [],

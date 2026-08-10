@@ -6,8 +6,20 @@ import * as Schema from "./schema.ts";
 /** How many refine cycles an item gets before its base is presumed wrong. */
 const MAX_REFINE_ATTEMPTS = 3;
 
-/** How many integrations between milestone verifications. */
-const MILESTONE = 3;
+/**
+ * Verification cadence tracks accumulated unverified semantic risk, not a
+ * flat count: heavy items verify almost immediately, cheap ones batch. The
+ * later a plan-level failure is discovered, the larger the forward
+ * correction — this bounds that cost where it is most likely to bite.
+ */
+const VERIFY_RISK_BUDGET = 6;
+
+/** How much unverified semantic risk integrating this item accrues. */
+function riskPoints(item: Schema.Item): number {
+  const complexity = { trivial: 1, standard: 2, complex: 3 }[item.complexity];
+  const risky = item.risk === "high" || item.risk === "critical" ? 1 : 0;
+  return complexity + risky;
+}
 
 /** How much model-grade spend one item may consume before it becomes triage evidence. */
 function itemSpendCap(item: Schema.Item): number {
@@ -185,6 +197,7 @@ export const DeliveryBlueprint = machine({
             backlog: context.backlog.map((item) =>
               item.id === context.current ? { ...item, status: "integrated" as const } : item
             ),
+            unverifiedRisk: context.unverifiedRisk + riskPoints(currentItem(context)),
             findings: [],
             attempts: 0,
             itemSpend: 0,
@@ -202,12 +215,15 @@ export const DeliveryBlueprint = machine({
       assign(actors.GateVerifier, {
         when: ({ context }) => context.backlog.every(gateTier),
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
+        update: ({ context }) => ({ ...context, unverifiedRisk: 0 }),
       }),
       assign(actors.Verifier, {
         when: ({ context }) => !context.backlog.every(gateTier),
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
         update: ({ context, output }) =>
-          output.outcome === "blocked" ? raise(charge(context), output.question) : charge(context),
+          output.outcome === "blocked"
+            ? raise(charge(context), output.question)
+            : { ...charge(context), unverifiedRisk: 0 },
       })
     ),
 
@@ -351,12 +367,12 @@ export const DeliveryBlueprint = machine({
     }),
     transition("integrate", "triage", { on: "failed" }),
 
-    // Every MILESTONE integrations, verify while replanning is still cheap.
+    // Verify while replanning is still cheap, as soon as the accumulated
+    // unverified risk spends its budget.
     transition("integrate", "verify", {
       on: "integrated",
       when: (context: Schema.Context) =>
-        context.backlog.filter((item) => item.status === "integrated").length % MILESTONE === 0 &&
-        readyItems(context.backlog).length > 0,
+        context.unverifiedRisk >= VERIFY_RISK_BUDGET && readyItems(context.backlog).length > 0,
     }),
     transition("integrate", "select", { on: "integrated" }),
 
