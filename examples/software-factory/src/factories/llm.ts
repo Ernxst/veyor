@@ -19,8 +19,9 @@ export default assemble(
   // Planning owns the model of the work: a backlog of items with acceptance
   // criteria and dependencies. On a replan it receives the current backlog
   // and the accumulated decisions as evidence.
-  codex(actors.Planner, "gpt-5.6-sol", {
+  claude(actors.Planner, "claude-opus-5", {
     effort: "xhigh",
+    permissionMode: "dontAsk",
     instructions: `
 Investigate the task and repository evidence, then decompose the work into a backlog of
 independent items with explicit acceptance criteria, dependencies, complexity, and risk.
@@ -39,8 +40,8 @@ invalidates. Do not implement, review, or claim completion.
   policy.AutoAcceptance,
 
   // Execution: harder items and repeated failure escalate to more capable workers.
-  codex(actors.TrivialImplementer, "gpt-5.3-spark", {
-    effort: "xhigh",
+  codex(actors.TrivialImplementer, "gpt-5.6-luna", {
+    effort: "medium",
     instructions: implementerInstructions,
   }),
   codex(actors.Implementer, "gpt-5.6-terra", {
@@ -48,7 +49,7 @@ invalidates. Do not implement, review, or claim completion.
     instructions: implementerInstructions,
   }),
   codex(actors.SeniorImplementer, "gpt-5.6-sol", {
-    effort: "high",
+    effort: "xhigh",
     instructions: implementerInstructions,
   }),
 
@@ -60,7 +61,7 @@ invalidates. Do not implement, review, or claim completion.
     outcome: "approved" as const,
     notes: `Quality gate passed for "${input.item.id}".`,
   })),
-  claude(actors.Reviewer, "claude-haiku-4-5", {
+  claude(actors.Reviewer, "claude-sonnet-5", {
     effort: "high",
     permissionMode: "dontAsk",
     instructions: `
@@ -92,7 +93,7 @@ resolved without a user-owned decision, report blocked with the question.
   }),
 
   // Verification certifies the whole delivery, once, against the plan.
-  codex(actors.Verifier, "gpt-5.6-terra", {
+  codex(actors.Verifier, "gpt-5.6-sol", {
     effort: "high",
     instructions: `
 Audit the completed backlog against the original task. Determine whether every item's
@@ -103,12 +104,14 @@ Do not repair missing work.
   }),
 
   // Model repair and recovery
-  codex(actors.Triage, "gpt-5.6-sol", {
+  claude(actors.Triage, "claude-opus-5", {
     effort: "high",
+    permissionMode: "dontAsk",
     instructions: `
-Diagnose why progress stopped: classify whether the failing item needs respecification
-(fix-item, with a revised objective), the plan itself is invalid (replan), or the situation
-requires a user-owned decision (escalate). Identify the earliest invalid assumption.
+Diagnose why progress stopped and classify the repair: respecify the failing item
+(fix-item, with a revised objective), split it into smaller fragments, defer it so the
+rest of the backlog ships, replan because the model itself is invalid, or escalate a
+user-owned decision. Identify the earliest invalid assumption.
 Do not implement a fix or defend the current approach.
 `,
   }),
