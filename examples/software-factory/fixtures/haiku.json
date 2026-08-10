@@ -1,0 +1,10 @@
+[
+  {
+    "id": "haiku-file",
+    "objective": "Write a haiku about state machines to haiku.txt in the working directory",
+    "acceptanceCriteria": ["haiku.txt exists and contains a haiku"],
+    "dependsOn": [],
+    "complexity": "trivial",
+    "risk": "low"
+  }
+]

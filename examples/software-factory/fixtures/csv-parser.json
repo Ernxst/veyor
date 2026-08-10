@@ -1,0 +1,15 @@
+[
+  {
+    "id": "csv-parser",
+    "objective": "Write parse.ts in the working directory: a CSV parser handling quoted fields, escaped quotes, and CRLF line endings, with no dependencies",
+    "acceptanceCriteria": [
+      "handles quoted fields containing commas",
+      "handles escaped double quotes inside quoted fields",
+      "handles CRLF and LF line endings",
+      "exports a single parse(text: string): string[][] function"
+    ],
+    "dependsOn": [],
+    "complexity": "standard",
+    "risk": "medium"
+  }
+]

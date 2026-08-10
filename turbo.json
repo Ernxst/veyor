@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
+  "globalPassThroughEnv": ["FORGE_WORKSPACE"],
   "tasks": {
     "//#fmt": {
       "cache": false,

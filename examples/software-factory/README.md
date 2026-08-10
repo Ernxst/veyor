@@ -116,6 +116,8 @@ The headless assembly ([`src/factories/headless.ts`](./src/factories/headless.ts
 
 An agent caller's loop is stateless re-runs: supply the decomposition via `--backlog` (adopted for free), read the result, answer whatever surfaced in `deferred` and the decision log, and re-run with `--decisions` pre-seeded. The re-run loop is the conversation — no IPC, no session state, no CLI beyond this script.
 
+Reproducible maiden-voyage scenarios — fixture backlogs and the commands to run them on the free-tier `local` assembly — live in [`fixtures/`](./fixtures/README.md).
+
 ## Read the example
 
 Start in this order:
