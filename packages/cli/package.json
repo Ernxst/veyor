@@ -1,0 +1,78 @@
+{
+  "name": "@forge/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/Ernxst/forge",
+  "bugs": {
+    "url": "https://github.com/Ernxst/forge/issues"
+  },
+  "author": {
+    "name": "Ernest Badu",
+    "email": "55922827+Ernxst@users.noreply.github.com",
+    "url": "https://github.com/Ernxst"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ernxst/forge.git",
+    "directory": "packages/cli"
+  },
+  "bin": {
+    "forge": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test-d.ts"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/cli.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "-------------------------------------------------------------------------------": "",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "typecheck": "tsc -b --noEmit",
+    "--------------------------------------------------------------------------------": "",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "---------------------------------------------------------------------------------": ""
+  },
+  "dependencies": {
+    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "0.18.5",
+    "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+    "@forge/tsconfig": "workspace:*",
+    "@types/node": "26.1.2",
+    "publint": "0.3.22",
+    "tsdown": "0.22.14",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  },
+  "peerDependencies": {
+    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@effect/platform-node": {
+      "optional": false
+    },
+    "effect": {
+      "optional": false
+    }
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}
