@@ -43,7 +43,7 @@ Implemented today:
 
 - typed actors, tasks, transitions, machines, and complete assembly checks;
 - deterministic, probabilistic, and terminal-prompt actor implementations;
-- Effect AI, Anthropic, OpenAI, Claude Code, and Codex adapters;
+- Effect AI, Anthropic, OpenAI, Claude Code, Codex, and opencode adapters;
 - Standard Schema adapters and actor-output validation;
 - an XState compiler with task input derivation, actor-output updates to machine context, context-aware selection between several assignments, and guarded transitions that route on outcome plus context;
 - per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
@@ -105,12 +105,13 @@ For the full design, see the [software factory example](./examples/software-fact
 
 ## Packages
 
-| Package                                    | Role                                                                         |
-| ------------------------------------------ | ---------------------------------------------------------------------------- |
-| [`@forge/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters. |
-| [`@forge/ai-effect`](./packages/ai-effect) | Effect AI language models as Forge actors.                                   |
-| [`@forge/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Forge actors.          |
-| [`@forge/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Forge actors.                   |
+| Package                                    | Role                                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| [`@forge/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters.  |
+| [`@forge/ai-effect`](./packages/ai-effect) | Effect AI language models as Forge actors.                                    |
+| [`@forge/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Forge actors.           |
+| [`@forge/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Forge actors.                    |
+| [`@forge/opencode`](./packages/opencode)   | opencode CLI implementations for Forge actors, including its free model tier. |
 
 The repository also contains an experimental [`@forge/cli`](./packages/cli), but it does not run Forge workflows yet.
 

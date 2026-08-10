@@ -1,0 +1,7 @@
+{
+  "extends": ["@forge/tsconfig", "@forge/tsconfig/node"],
+  "compilerOptions": {
+    "composite": true
+  },
+  "include": ["test", "vitest.config.ts"]
+}

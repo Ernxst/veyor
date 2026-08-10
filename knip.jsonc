@@ -11,7 +11,9 @@
       ],
     },
     "./examples/*": {
-      "entry": ["scripts/*"],
+      // Factory assemblies are selected at runtime via a dynamic import in
+      // scripts/deliver.ts (--factory), which knip cannot trace.
+      "entry": ["scripts/*", "src/factories/*"],
     },
   },
 }
