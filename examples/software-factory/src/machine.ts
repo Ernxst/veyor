@@ -166,12 +166,19 @@ export const DeliveryBlueprint = machine({
       })
     ),
 
-    // Integration marks the item delivered and frees the line.
+    // Integration is the per-item mechanical gate: it certifies the whole
+    // system still builds and passes checks with the item in place, so nothing
+    // broken is ever stacked on. Failure surfaces at the offending item —
+    // verification failures then attribute to the plan, not to archaeology.
     task(
       "integrate",
       assign(actors.Integrator, {
         input: (context) => ({ itemId: currentItem(context).id }),
-        update: ({ context }) => {
+        update: ({ context, output }) => {
+          if (output.outcome === "failed") {
+            return { ...context, findings: output.findings, attempts: context.attempts + 1 };
+          }
+
           const { current: _delivered, ...rest } = context;
           return {
             ...rest,
@@ -302,7 +309,10 @@ export const DeliveryBlueprint = machine({
       on: "selected",
       when: (context: Schema.Context) => context.spend < context.spendBudget,
     }),
-    transition("select", "user-review", { on: "selected" }),
+    // Budget pressure gets autonomous scope surgery first — triage can defer
+    // or split to fit — and reaches the user through escalation when the cut
+    // needs authority (or more funding).
+    transition("select", "triage", { on: "selected" }),
     transition("select", "verify", { on: "exhausted" }),
     transition("select", "triage", { on: "inconsistent" }),
 
@@ -331,6 +341,15 @@ export const DeliveryBlueprint = machine({
     transition("refine", "review", { on: "refined" }),
     transition("refine", "ask-user", { on: "blocked" }),
     transition("refine", "triage", { on: "contradiction" }),
+
+    // A failed integration feeds the same bounded repair loop as a failed review.
+    transition("integrate", "refine", {
+      on: "failed",
+      when: (context: Schema.Context) =>
+        context.attempts < MAX_REFINE_ATTEMPTS &&
+        context.itemSpend < itemSpendCap(currentItem(context)),
+    }),
+    transition("integrate", "triage", { on: "failed" }),
 
     // Every MILESTONE integrations, verify while replanning is still cheap.
     transition("integrate", "verify", {

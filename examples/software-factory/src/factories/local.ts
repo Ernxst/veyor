@@ -95,7 +95,7 @@ export default assemble(
     FREE,
     worker({
       instructions:
-        "Classify the repair: fix-item with a revised objective, split into fragments, defer, replan, or escalate.",
+        "Classify the repair: fix-item with a revised objective, split into fragments, defer, replan, or escalate. When spend >= spendBudget, prefer defer or escalate.",
     })
   ),
 

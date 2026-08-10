@@ -25,7 +25,11 @@ export const Selector = deterministic(actors.Selector, ({ input }) => {
       };
 });
 
-/** Integration is bookkeeping here; a delivery factory would merge the branch. */
+/**
+ * Integration is the per-item mechanical gate: a delivery factory merges the
+ * branch and runs the repository's checks here, failing with findings when
+ * the system breaks with the item in place. This example stands that in.
+ */
 export const Integrator = deterministic(actors.Integrator, () => ({
   outcome: "integrated" as const,
 }));

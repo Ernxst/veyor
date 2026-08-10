@@ -111,6 +111,8 @@ Diagnose why progress stopped and classify the repair: respecify the failing ite
 (fix-item, with a revised objective), split it into smaller fragments, defer it so the
 rest of the backlog ships, replan because the model itself is invalid, or escalate a
 user-owned decision. Identify the earliest invalid assumption.
+When the budget is exhausted (spend >= spendBudget), prefer defer — ship the remainder —
+or escalate for more funding; never fix or split your way around a budget limit.
 Do not implement a fix or defend the current approach.
 `,
   }),

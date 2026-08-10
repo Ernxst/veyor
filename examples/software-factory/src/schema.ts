@@ -156,9 +156,13 @@ export const IntegrationRequest = Schema.Struct({
   itemId: Schema.String,
 });
 
-export const IntegrationOutput = Schema.Struct({
-  outcome: Schema.Literal("integrated"),
-});
+export const IntegrationOutput = Schema.Union([
+  Schema.Struct({ outcome: Schema.Literal("integrated") }),
+  Schema.Struct({
+    outcome: Schema.Literal("failed"),
+    findings: Schema.Array(Schema.String),
+  }),
+]);
 
 export const VerificationRequest = Schema.Struct({
   prompt: Schema.String,

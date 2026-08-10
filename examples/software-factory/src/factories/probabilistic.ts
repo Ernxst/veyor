@@ -39,9 +39,15 @@ export default function factory(seed: number) {
     // Deterministic policy shared with the LLM factory
     policy.PlanAdopter,
     policy.Selector,
-    policy.Integrator,
     policy.GateVerifier,
     policy.AutoAcceptance,
+
+    // Integration is the mechanical gate: review approved the change, but the
+    // whole system can still fail checks with it in place.
+    probabilistic(actors.Integrator, {
+      seed: seed + 13,
+      outcomes: { integrated: 0.95, failed: 0.05 },
+    }),
 
     // Workers
     probabilistic(actors.TrivialImplementer, {
@@ -89,6 +95,9 @@ export default function factory(seed: number) {
       outcomes: ({ context }) => {
         const item = context.backlog.find((candidate) => candidate.id === context.current);
         if (item === undefined) return { replan: 0.7, escalate: 0.3 };
+        // Budget pressure: cut scope to fit (defer ships the remainder) or
+        // escalate for funding — never patch around an exhausted budget.
+        if (context.spend >= context.spendBudget) return { defer: 0.65, escalate: 0.35 };
         return item.complexity === "trivial"
           ? { "fix-item": 0.45, defer: 0.25, replan: 0.15, escalate: 0.15 }
           : { "fix-item": 0.3, split: 0.25, defer: 0.2, replan: 0.15, escalate: 0.1 };
