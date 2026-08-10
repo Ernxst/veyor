@@ -19,18 +19,7 @@ export default function factory(seed: number) {
     probabilistic(actors.Planner, { seed: seed + 1, failureRate: 0.02 }),
     probabilistic(actors.Resolver, {
       seed: seed + 2,
-      outcomes: ({ context }) =>
-        context.resolution === undefined
-          ? { implement: 1 } // the first commitment is always to build something
-          : {
-              implement: 0.25,
-              review: 0.3,
-              verify: 0.2,
-              refine: 0.15,
-              "ask-user": 0.05,
-              escalate: 0.03,
-              abandoned: 0.02,
-            },
+      outcomes: ({ context }) => resolverWeights(context),
     }),
     probabilistic(actors.TrivialImplementer, { seed: seed + 3, failureRate: 0.1 }),
     probabilistic(actors.Implementer, { seed: seed + 4, failureRate: 0.1 }),
@@ -64,8 +53,49 @@ export default function factory(seed: number) {
 
     // HITL, simulated
     probabilistic(actors.AskUserQuestion, { seed: seed + 11, outcomes: { answered: 1 } }),
-    probabilistic(actors.UserReview, { seed: seed + 12, outcomes: { continue: 0.9, abandon: 0.1 } })
+    probabilistic(actors.UserReview, {
+      seed: seed + 12,
+      outcomes: ({ context }) => userReviewWeights(context),
+    })
   );
+}
+
+/**
+ * Abandonment is evidence-driven, not memoryless. A flat per-decision quit
+ * weight compounds over a run's many resolve cycles into implausible run-level
+ * abandonment (a constant 2% per decision abandons ~19% of runs); a resolver
+ * only quits under sustained distress.
+ */
+function resolverWeights(context: Schema.Context): OutcomeWeights {
+  if (context.resolution === undefined) return { implement: 1 };
+
+  const distress = distressLevel(context);
+  return {
+    implement: 0.25,
+    review: 0.3,
+    verify: 0.2,
+    refine: 0.15,
+    "ask-user": 0.02 + 0.08 * distress,
+    escalate: 0.01 + 0.09 * distress,
+    abandoned: 0.1 * distress ** 2,
+  };
+}
+
+/** A human waves work through when it is healthy and pulls the plug when it is not. */
+function userReviewWeights(context: Schema.Context): OutcomeWeights {
+  const overBudget = context.spend >= context.spendBudget;
+  const abandon = overBudget ? 0.5 : 0.02 + 0.28 * distressLevel(context);
+  return { continue: 1 - abandon, abandon };
+}
+
+/**
+ * How troubled this run looks: 0 for a healthy run, 1 for one deep in
+ * consecutive rejections or burning through its budget.
+ */
+function distressLevel(context: Schema.Context): number {
+  const streak = rejectionStreak(context.reviewHistory);
+  const spendFraction = context.spend / context.spendBudget;
+  return Math.min(1, streak / 4 + Math.max(0, spendFraction - 0.5));
 }
 
 /** Each consecutive rejection multiplies the odds of the next one. */
