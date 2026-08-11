@@ -7,7 +7,6 @@
       "devDependencies": {
         "@commitlint/cli": "21.2.1",
         "@commitlint/config-conventional": "21.2.0",
-        "@tanstack/intent": "0.3.6",
         "@types/node": "26.1.2",
         "@veyorhq/oxlint": "workspace:*",
         "@veyorhq/tsconfig": "workspace:*",
@@ -84,6 +83,7 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": "4.0.0-beta.103",
+        "@tanstack/intent": "0.3.6",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -114,6 +114,7 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": "4.0.0-beta.103",
+        "@tanstack/intent": "0.3.6",
         "@types/node": "26.1.2",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
@@ -141,6 +142,7 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@ark/attest": "0.56.3",
+        "@tanstack/intent": "0.3.6",
         "@types/node": "26.1.2",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
@@ -164,6 +166,7 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": "4.0.0-beta.103",
+        "@tanstack/intent": "0.3.6",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -191,6 +194,7 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": "4.0.0-beta.103",
+        "@tanstack/intent": "0.3.6",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -833,7 +837,7 @@
 
     "browserslist": ["browserslist@4.28.7", "", { "dependencies": { "baseline-browser-mapping": "^2.10.44", "caniuse-lite": "^1.0.30001806", "electron-to-chromium": "^1.5.393", "node-releases": "^2.0.51", "update-browserslist-db": "^1.2.3" }, "bin": { "browserslist": "cli.js" } }, "sha512-JxV13hNrFxqjOc8alRbq9dK1MM79NEXYpma2B2J4wAtpWS5zIEIKqWPGCl7N4o7Uc7B7itylh7SuDujATRyyTw=="],
 
-    "cac": ["cac@6.7.14", "", {}, "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ=="],
+    "cac": ["cac@7.0.0", "", {}, "sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ=="],
 
     "callsites": ["callsites@3.1.0", "", {}, "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ=="],
 
@@ -1375,6 +1379,8 @@
 
     "@eslint-community/eslint-utils/eslint-visitor-keys": ["eslint-visitor-keys@3.4.3", "", {}, "sha512-wpc+LXeiyiisxPlEkUzU6svyS1frIO3Mgxj1fdy7Pm8Ygzguax2N3Fa/D/ag1WqbOprdI+uY6wMUl8/a2G+iag=="],
 
+    "@tanstack/intent/cac": ["cac@6.7.14", "", {}, "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ=="],
+
     "@typescript/analyze-trace/yargs": ["yargs@16.2.2", "", { "dependencies": { "cliui": "^7.0.2", "escalade": "^3.1.1", "get-caller-file": "^2.0.5", "require-directory": "^2.1.1", "string-width": "^4.2.0", "y18n": "^5.0.5", "yargs-parser": "^20.2.2" } }, "sha512-Nt9ZJjXTv5R8MHbqby/wXQ6Gi0Bb3TcYZkR1bzuL4yB2OxWPkXknz513gEF0GoA6tn00UpbPvERW8rzCuWCA6w=="],
 
     "cliui/string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
@@ -1388,8 +1394,6 @@
     "rolldown/@oxc-project/types": ["@oxc-project/types@0.143.0", "", {}, "sha512-u6JZdLBTLotrNC9Vd6vPssINdzcCzleKAH6EJKImQb7GtYvX5keN2dxkoK44stCc4tffE6QQRtZTXVSzsLUlWA=="],
 
     "rolldown-plugin-dts/get-tsconfig": ["get-tsconfig@5.0.0-beta.5", "", { "dependencies": { "resolve-pkg-maps": "^1.0.0" } }, "sha512-/6gFNr0N04nob252sTQxyFLi3eKFRqIg1I87YcqAMT1i6SQrSF6KujUEQrtrjMV0H/eejTCltLdDSTEMzHbnsQ=="],
-
-    "tsdown/cac": ["cac@7.0.0", "", {}, "sha512-tixWYgm5ZoOD+3g6UTea91eow5z6AAHaho3g0V9CNSNb45gM8SmflpAc+GRd1InC4AqN/07Unrgp56Y94N9hJQ=="],
 
     "vite/fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 

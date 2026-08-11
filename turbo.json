@@ -75,6 +75,11 @@
     "typecheck": {
       "dependsOn": ["^build"],
       "description": "Type-check workspace packages in dependency order."
+    },
+    "intent:validate": {
+      "description": "Validate the package's shipped Agent Skills.",
+      "inputs": ["skills/**"],
+      "outputs": []
     }
   }
 }

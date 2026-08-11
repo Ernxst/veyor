@@ -62,7 +62,8 @@
     "test:watch": "vitest",
     "test:instantiations": "vitest run --project instantiations",
     "test:instantiations:update": "vitest run --project instantiations -u",
-    "---------------------------------------------------------------------------------": ""
+    "---------------------------------------------------------------------------------": "",
+    "intent:validate": "intent validate skills"
   },
   "dependencies": {
     "@sinclair/typebox": "0.34.52",
@@ -76,6 +77,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "@ark/attest": "0.56.3",
+    "@tanstack/intent": "0.3.6",
     "@types/node": "26.1.2",
     "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",

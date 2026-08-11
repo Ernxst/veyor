@@ -30,7 +30,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "-----------------------------------------------------------------------------": "",
-    "intent:validate": "for pkg in core cli anthropic openai opencode; do bunx @tanstack/intent validate packages/$pkg/skills || exit 1; done",
+    "intent:validate": "turbo run intent:validate",
     "------------------------------------------------------------------------------": "",
     "postinstall": "turbo run postinstall //#postinstall:root",
     "postinstall:root": "lefthook install"
@@ -38,7 +38,6 @@
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "21.2.0",
-    "@tanstack/intent": "0.3.6",
     "@types/node": "26.1.2",
     "@veyorhq/oxlint": "workspace:*",
     "@veyorhq/tsconfig": "workspace:*",
