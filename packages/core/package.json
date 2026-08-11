@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed workflow blueprints with replaceable workers: the Veyor workflow model, XState compiler, actor implementations, and schema adapters.",
   "keywords": [
     "agents",

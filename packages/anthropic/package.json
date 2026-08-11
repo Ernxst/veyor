@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/anthropic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Anthropic API and Claude Code CLI workers for Veyor actors.",
   "keywords": [
     "agents",

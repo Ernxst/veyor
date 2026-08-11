@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/openai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenAI API and Codex CLI workers for Veyor actors.",
   "keywords": [
     "agents",

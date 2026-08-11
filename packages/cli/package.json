@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The Veyor runtime host: run, simulate, and inspect factories declared in veyor.config.ts.",
   "keywords": [
     "agents",

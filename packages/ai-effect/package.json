@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/ai-effect",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Effect AI language models as Veyor actors.",
   "keywords": [
     "agents",
