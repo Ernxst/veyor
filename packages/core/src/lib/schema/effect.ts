@@ -1,7 +1,7 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import type { ParseOptions } from "effect/SchemaAST";
-import type { ForgeSchema } from "./index.ts";
+import type { VeyorSchema } from "./index.ts";
 
 export type EffectSchema = Schema.Codec<unknown, Record<string, unknown>, never, unknown>;
 
@@ -23,6 +23,6 @@ export const JsonParse: (
 
 export const isEffectSchema = (value: unknown): value is EffectSchema => Schema.isSchema(value);
 
-export function schema<A>(value: Schema.ConstraintDecoder<A>): ForgeSchema<unknown, A> {
+export function schema<A>(value: Schema.ConstraintDecoder<A>): VeyorSchema<unknown, A> {
   return Object.assign(Schema.toStandardSchemaV1(value), Schema.toStandardJSONSchemaV1(value));
 }

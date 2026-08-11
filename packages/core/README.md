@@ -1,6 +1,6 @@
-# `@forge/core`
+# `@veyor/core`
 
-`@forge/core` is the workflow model behind Forge. It defines typed actors, tasks, transitions, and machines, then binds them to concrete workers with `assemble`.
+`@veyor/core` is the workflow model behind Veyor. It defines typed actors, tasks, transitions, and machines, then binds them to concrete workers with `assemble`.
 
 Use this package when you want the workflow to survive changes in model, provider, human role, or execution strategy.
 
@@ -9,7 +9,7 @@ Use this package when you want the workflow to survive changes in model, provide
 
 ## How it fits
 
-A Forge application has two parts:
+A Veyor application has two parts:
 
 1. A **blueprint** declares the workflow and its contracts.
 2. An **assembly** supplies one implementation for every actor in that blueprint.
@@ -19,9 +19,9 @@ The blueprint is the durable part. You can assemble it with deterministic code, 
 ## Example
 
 ```ts
-import { actor, assemble, assign, machine, sink, task, transition } from "@forge/core";
-import { deterministic } from "@forge/core/actors";
-import { schema } from "@forge/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
+import { deterministic } from "@veyor/core/actors";
+import { schema } from "@veyor/core/schema/effect";
 import * as Schema from "effect/Schema";
 
 const Context = schema(Schema.Struct({ objective: Schema.String }));
@@ -58,24 +58,24 @@ Factory.run({ objective: "Ship a typed workflow" });
 
 `assemble` checks at compile time that every actor in the blueprint has an implementation.
 
-Every actor output must contain an `outcome: string`. Define `outcome` with a literal or literal union in the output schema so Forge can constrain each task's transitions to the outcomes its actors declare.
+Every actor output must contain an `outcome: string`. Define `outcome` with a literal or literal union in the output schema so Veyor can constrain each task's transitions to the outcomes its actors declare.
 
 ## Public entry points
 
 | Entry point                  | Purpose                                                                     |
 | ---------------------------- | --------------------------------------------------------------------------- |
-| `@forge/core`                | `actor`, `task`, `sink`, `assign`, `transition`, `machine`, and `assemble`. |
-| `@forge/core/actors`         | Deterministic, probabilistic, and terminal-prompt actor implementations.    |
-| `@forge/core/schema`         | Standard Schema and JSON Schema helpers.                                    |
-| `@forge/core/schema/effect`  | Effect Schema adapter and JSON encoding helpers.                            |
-| `@forge/core/schema/typebox` | TypeBox adapter.                                                            |
-| `@forge/core/schema/valibot` | Valibot adapter.                                                            |
+| `@veyor/core`                | `actor`, `task`, `sink`, `assign`, `transition`, `machine`, and `assemble`. |
+| `@veyor/core/actors`         | Deterministic, probabilistic, and terminal-prompt actor implementations.    |
+| `@veyor/core/schema`         | Standard Schema and JSON Schema helpers.                                    |
+| `@veyor/core/schema/effect`  | Effect Schema adapter and JSON encoding helpers.                            |
+| `@veyor/core/schema/typebox` | TypeBox adapter.                                                            |
+| `@veyor/core/schema/valibot` | Valibot adapter.                                                            |
 
 ## Actor implementations
 
 ### Deterministic
 
-Use `deterministic` for ordinary synchronous or promise-based TypeScript. Forge validates the returned value against the actor's output contract.
+Use `deterministic` for ordinary synchronous or promise-based TypeScript. Veyor validates the returned value against the actor's output contract.
 
 ```ts
 const PlannerImpl = deterministic(Planner, ({ context }) => ({
@@ -89,7 +89,7 @@ const PlannerImpl = deterministic(Planner, ({ context }) => ({
 Use `probabilistic` to exercise a workflow without paying for real workers. It can generate values from an actor's JSON Schema, fail at a configured rate, choose weighted outcomes, and replay seeded runs.
 
 ```ts
-import { probabilistic } from "@forge/core/actors";
+import { probabilistic } from "@veyor/core/actors";
 
 const PlannerSimulation = probabilistic(Planner, {
   seed: 42,
@@ -102,7 +102,7 @@ const PlannerSimulation = probabilistic(Planner, {
 Use `prompt` for a terminal-owned authority boundary. The package includes `question()` and `review()` formats.
 
 ```ts
-import { prompt, question } from "@forge/core/actors";
+import { prompt, question } from "@veyor/core/actors";
 
 const AskUserImpl = prompt(AskUser, { format: question() });
 ```
@@ -118,7 +118,7 @@ task(
 
 ## Schema adapters
 
-Actor inputs and outputs use the Standard Schema contract. Forge includes adapters for:
+Actor inputs and outputs use the Standard Schema contract. Veyor includes adapters for:
 
 - Effect Schema through `schema(...)`;
 - TypeBox through `typebox(...)`;
@@ -159,4 +159,4 @@ Semantics: transitions are evaluated in declaration order and the first whose ou
 - Run history, aggregation, and richer retry metadata are not implemented.
 - A machine cannot yet invoke another machine (or itself) as a task.
 
-See the [software factory example](../../examples/software-factory) for the full blueprint and the [Forge README](../../README.md) for the project overview.
+See the [software factory example](../../examples/software-factory) for the full blueprint and the [Veyor README](../../README.md) for the project overview.

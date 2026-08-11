@@ -1,5 +1,5 @@
-import { assemble } from "@forge/core";
-import { deterministic, probabilistic, type OutcomeWeights } from "@forge/core/actors";
+import { assemble } from "@veyor/core";
+import { deterministic, probabilistic, type OutcomeWeights } from "@veyor/core/actors";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import type * as Schema from "../schema.ts";

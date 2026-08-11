@@ -1,10 +1,10 @@
-import type { Machine, Task } from "@forge/core";
+import type { Machine, Task } from "@veyor/core";
 import type { Command } from "effect/unstable/cli";
 
 /**
- * An entry in `ForgeConfig.assemblies`: a ready factory, or — for
+ * An entry in `VeyorConfig.assemblies`: a ready factory, or — for
  * simulation-flavored assemblies — a factory parameterized by seed.
- * `forge simulate` defaults to the config's sole seeded assembly.
+ * `veyor simulate` defaults to the config's sole seeded assembly.
  */
 export type Assembly<M extends Machine.Any = Machine.Any> =
   | Machine.Impl<M>
@@ -71,11 +71,11 @@ export interface RunConfig<M extends Machine.Any = Machine.Any, A extends Assemb
  * The config as `defineConfig` checks it: assembly names, sink names, and
  * context paths are literal types read off the assemblies record.
  */
-export interface TypedForgeConfig<M extends Machine.Any, A extends Assemblies> {
+export interface TypedVeyorConfig<M extends Machine.Any, A extends Assemblies> {
   readonly name?: string;
   readonly description?: string;
   readonly version?: string;
-  /** Rendered in `forge run --help`; `{ command, description }` pairs. */
+  /** Rendered in `veyor run --help`; `{ command, description }` pairs. */
   readonly examples?: readonly Command.Command.Example[];
   readonly assemblies: A;
   readonly args?: readonly ArgSpec<Machine.ContextOf<M>>[];
@@ -83,7 +83,7 @@ export interface TypedForgeConfig<M extends Machine.Any, A extends Assemblies> {
 }
 
 /** The config as the CLI consumes it: the typed view with literals erased. */
-export interface ForgeConfig {
+export interface VeyorConfig {
   readonly name?: string;
   readonly description?: string;
   readonly version?: string;
@@ -97,26 +97,26 @@ export interface ForgeConfig {
 }
 
 export function defineConfig<const A extends Assemblies>(
-  config: TypedForgeConfig<MachineOf<A>, A>
-): ForgeConfig {
+  config: TypedVeyorConfig<MachineOf<A>, A>
+): VeyorConfig {
   return config;
 }
 
 /** The machine definition every assembly of a config implements. */
-export function blueprintOf(config: ForgeConfig): Machine.Any {
+export function blueprintOf(config: VeyorConfig): Machine.Any {
   const assembly = Object.values(config.assemblies).at(0);
   if (assembly === undefined) {
-    throw new Error("forge.config: declare at least one assembly.");
+    throw new Error("veyor.config: declare at least one assembly.");
   }
 
   return (typeof assembly === "function" ? assembly(0) : assembly).def;
 }
 
 /**
- * The seeded assembly `forge simulate` defaults to — defined only when
+ * The seeded assembly `veyor simulate` defaults to — defined only when
  * exactly one assembly is seed-parameterized.
  */
-export function soleSeededName(config: ForgeConfig): string | undefined {
+export function soleSeededName(config: VeyorConfig): string | undefined {
   const seeded = Object.entries(config.assemblies).filter(
     ([, assembly]) => typeof assembly === "function"
   );

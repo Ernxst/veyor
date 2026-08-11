@@ -1,4 +1,4 @@
-import { assign, machine, sink, task, transition } from "@forge/core";
+import { assign, machine, sink, task, transition } from "@veyor/core";
 import * as actors from "./actors.ts";
 import * as Schema from "./schema.ts";
 

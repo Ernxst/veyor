@@ -1,9 +1,9 @@
-import { isSink, type Machine, type Task } from "@forge/core";
+import { isSink, type Machine, type Task } from "@veyor/core";
 import { Console, Effect, Option } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
-import { blueprintOf, type ForgeConfig } from "../config.ts";
+import { blueprintOf, type VeyorConfig } from "../config.ts";
 
-export function makeInspect(config: ForgeConfig) {
+export function makeInspect(config: VeyorConfig) {
   return Command.make(
     "inspect",
     {

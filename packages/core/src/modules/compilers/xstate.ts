@@ -6,7 +6,7 @@ import type { Machine } from "../machine.ts";
 import { isSink, type Task } from "../task.ts";
 
 /** Internal final state a run enters when a task exhausts its retries. */
-export const Failed = "forge:failed";
+export const Failed = "veyor:failed";
 
 /**
  * The compiled machine wraps the blueprint's context so retry state and the

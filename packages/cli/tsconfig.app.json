@@ -1,3 +1,3 @@
 {
-  "extends": ["@forge/tsconfig", "@forge/tsconfig/node", "@forge/tsconfig/effect"]
+  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node", "@veyor/tsconfig/effect"]
 }

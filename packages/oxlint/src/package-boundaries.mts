@@ -11,7 +11,7 @@ export default defineConfig({
   overrides: [
     {
       files: ["**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"],
-      jsPlugins: ["@forge/oxlint/plugins/package-boundaries"],
+      jsPlugins: ["@veyor/oxlint/plugins/package-boundaries"],
     },
   ],
 });

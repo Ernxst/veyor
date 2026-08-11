@@ -11,9 +11,9 @@
       ],
     },
     "./examples/*": {
-      // forge.config.ts is loaded at runtime by the forge CLI via a dynamic
+      // veyor.config.ts is loaded at runtime by the veyor CLI via a dynamic
       // import, which knip cannot trace.
-      "entry": ["forge.config.ts", "src/assemblies/*"],
+      "entry": ["veyor.config.ts", "src/assemblies/*"],
     },
   },
 }

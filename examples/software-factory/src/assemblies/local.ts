@@ -4,9 +4,9 @@ import { mkdirSync } from "node:fs";
 //   bun run deliver "<task>" --factory local
 // Workers act inside an isolated workspace, never this repository — see
 // fixtures/README.md for reproducible scenarios.
-import { assemble } from "@forge/core";
-import { acceptance, prompt, question, review } from "@forge/core/actors";
-import { opencode, type OpencodeOptions } from "@forge/opencode";
+import { assemble } from "@veyor/core";
+import { acceptance, prompt, question, review } from "@veyor/core/actors";
+import { opencode, type OpencodeOptions } from "@veyor/opencode";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
@@ -14,7 +14,7 @@ import * as policy from "./policy.ts";
 const FREE = "opencode/deepseek-v4-flash-free";
 
 /** Where workers act. Agentic workers with tools must never run in this repo. */
-const workspace = process.env.FORGE_WORKSPACE ?? "/tmp/forge-voyage";
+const workspace = process.env.VEYOR_WORKSPACE ?? "/tmp/veyor-voyage";
 mkdirSync(workspace, { recursive: true });
 
 function worker(options: Omit<OpencodeOptions, "cwd">): OpencodeOptions {

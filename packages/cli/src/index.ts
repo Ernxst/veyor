@@ -3,8 +3,8 @@ export {
   type ArgSpec,
   type Assembly,
   type ContextPath,
-  type ForgeConfig,
+  type VeyorConfig,
   type MachineOf,
   type RunConfig,
-  type TypedForgeConfig,
+  type TypedVeyorConfig,
 } from "./config.ts";

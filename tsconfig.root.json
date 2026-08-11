@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": ["@forge/tsconfig", "@forge/tsconfig/node"],
+  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node"],
   "compilerOptions": {
     "composite": true
   },

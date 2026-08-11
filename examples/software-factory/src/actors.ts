@@ -1,5 +1,5 @@
-import { actor } from "@forge/core";
-import { schema } from "@forge/core/schema/effect";
+import { actor } from "@veyor/core";
+import { schema } from "@veyor/core/schema/effect";
 import * as Schema from "./schema.ts";
 
 export const Planner = actor("planner", {

@@ -1,5 +1,5 @@
 {
-  "name": "@forge/oxlint",
+  "name": "@veyor/oxlint",
   "version": "0.0.0",
   "files": [
     "src"
@@ -27,7 +27,7 @@
     "---------------------------------------------------------------------------------": ""
   },
   "devDependencies": {
-    "@forge/tsconfig": "workspace:*",
+    "@veyor/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "typescript": "7.0.2"
   }

@@ -1,11 +1,11 @@
 {
-  "name": "@forge/core",
+  "name": "@veyor/core",
   "version": "0.0.0",
   "description": "",
   "keywords": [],
-  "homepage": "https://github.com/Ernxst/forge",
+  "homepage": "https://github.com/Ernxst/veyor",
   "bugs": {
-    "url": "https://github.com/Ernxst/forge/issues"
+    "url": "https://github.com/Ernxst/veyor/issues"
   },
   "author": {
     "name": "Ernest Badu",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ernxst/forge.git",
+    "url": "git+https://github.com/Ernxst/veyor.git",
     "directory": "packages/core"
   },
   "files": [
@@ -63,8 +63,8 @@
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "@ark/attest": "0.56.3",
-    "@forge/tsconfig": "workspace:*",
     "@types/node": "26.1.2",
+    "@veyor/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "tsdown": "0.22.14",
     "typescript": "7.0.2",

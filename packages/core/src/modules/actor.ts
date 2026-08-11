@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { getJsonSchema, type ForgeSchema } from "../lib/schema/index.ts";
+import { getJsonSchema, type VeyorSchema } from "../lib/schema/index.ts";
 import { Kind, Meta } from "../lib/types.ts";
 import type { Machine } from "./machine.ts";
 import type { Task } from "./task.ts";
@@ -15,10 +15,10 @@ export interface Actor<
   readonly [Meta]: { Context: Context; Input: Input; Output: Output; Aggregate: Aggregate };
   readonly name: Name;
   readonly contract: {
-    readonly Context: ForgeSchema<unknown, Context> | undefined;
-    readonly Input: ForgeSchema<unknown, Input>;
-    readonly Output: ForgeSchema<unknown, Output>;
-    readonly Aggregate: ForgeSchema<unknown, Aggregate>;
+    readonly Context: VeyorSchema<unknown, Context> | undefined;
+    readonly Input: VeyorSchema<unknown, Input>;
+    readonly Output: VeyorSchema<unknown, Output>;
+    readonly Aggregate: VeyorSchema<unknown, Aggregate>;
   };
 }
 

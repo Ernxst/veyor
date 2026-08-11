@@ -1,4 +1,4 @@
-import base from "@forge/oxlint";
+import base from "@veyor/oxlint";
 import { defineConfig } from "oxlint";
 
 export default defineConfig({

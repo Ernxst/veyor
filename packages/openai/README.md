@@ -1,11 +1,11 @@
-# `@forge/openai`
+# `@veyor/openai`
 
-`@forge/openai` provides OpenAI-backed implementations for Forge actors.
+`@veyor/openai` provides OpenAI-backed implementations for Veyor actors.
 
 It exposes two separate adapters:
 
-- `@forge/openai/openai` creates an Effect AI model layer for `@forge/ai-effect`.
-- `@forge/openai/codex` runs a Forge actor through the local Codex CLI.
+- `@veyor/openai/openai` creates an Effect AI model layer for `@veyor/ai-effect`.
+- `@veyor/openai/codex` runs a Veyor actor through the local Codex CLI.
 
 > [!IMPORTANT]
 > This package is under active development. It is private, remains at `0.0.0`, and is not published to a package registry.
@@ -15,8 +15,8 @@ It exposes two separate adapters:
 Use `openai(model)` with `agent(...)` when the actor should call the OpenAI API through Effect AI.
 
 ```ts
-import { agent } from "@forge/ai-effect";
-import { openai } from "@forge/openai/openai";
+import { agent } from "@veyor/ai-effect";
+import { openai } from "@veyor/openai/openai";
 import { Writer } from "./actors.js";
 
 const WriterImpl = agent(Writer, openai("gpt-4o-mini"), {
@@ -31,7 +31,7 @@ The adapter reads `OPENAI_API_KEY` through Effect `Config`. Missing or invalid c
 Use `codex(actor, model, options)` when a Codex task should implement the actor.
 
 ```ts
-import { codex } from "@forge/openai/codex";
+import { codex } from "@veyor/openai/codex";
 import { Planner } from "./actors.js";
 
 const PlannerImpl = codex(Planner, "gpt-5.6-sol", {
@@ -48,7 +48,7 @@ The adapter:
 2. writes that schema to a scoped temporary directory;
 3. runs `codex exec` with structured output enabled;
 4. parses and validates the final JSON value;
-5. passes the Forge task's abort signal into the Effect runtime.
+5. passes the Veyor task's abort signal into the Effect runtime.
 
 ### Options
 
@@ -66,7 +66,7 @@ The Codex executable must be installed, authenticated, and available on `PATH`. 
 
 - Both adapters require output contracts that can produce JSON Schema.
 - Codex aggregation currently returns an empty placeholder.
-- The OpenAI model adapter inherits the unfinished aggregation support from `@forge/ai-effect`.
+- The OpenAI model adapter inherits the unfinished aggregation support from `@veyor/ai-effect`.
 - Retry, fallback, and budget policy belong to the workflow and are not added by this package.
 
-See [`@forge/ai-effect`](../ai-effect), [`@forge/core`](../core), and the [software factory example](../../examples/software-factory).
+See [`@veyor/ai-effect`](../ai-effect), [`@veyor/core`](../core), and the [software factory example](../../examples/software-factory).

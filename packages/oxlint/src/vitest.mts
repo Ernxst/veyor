@@ -8,7 +8,7 @@ export default defineConfig({
       jsPlugins: [
         {
           name: "vitest-js",
-          specifier: "@forge/oxlint/plugins/vitest",
+          specifier: "@veyor/oxlint/plugins/vitest",
         },
         {
           name: "test-format",

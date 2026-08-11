@@ -1,5 +1,5 @@
 {
-  "name": "@forge/tsconfig",
+  "name": "@veyor/tsconfig",
   "version": "0.0.0",
   "files": [
     "*.json"

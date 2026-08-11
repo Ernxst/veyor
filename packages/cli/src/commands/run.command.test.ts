@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
 import { describe, expect, it } from "@effect/vitest";
-import { actor, assemble, assign, machine, sink, task, transition } from "@forge/core";
-import { deterministic } from "@forge/core/actors";
-import { schema } from "@forge/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
+import { deterministic } from "@veyor/core/actors";
+import { schema } from "@veyor/core/schema/effect";
 import { Effect, Layer } from "effect";
 import * as Schema from "effect/Schema";
 import { TestConsole } from "effect/testing";
@@ -69,7 +69,7 @@ const parsed = (lines: readonly string[]): unknown => JSON.parse(lines.join("\n"
 
 const version = { version: "0.0.0" };
 
-describe("forge run", () => {
+describe("veyor run", () => {
   it.effect("lifts args by schema kind, applies defaults, and reports the sink", () =>
     Effect.gen(function* () {
       const { out } = yield* exec(
@@ -93,7 +93,7 @@ describe("forge run", () => {
   );
 });
 
-describe("forge simulate", () => {
+describe("veyor simulate", () => {
   it.effect("tallies sinks across runs", () =>
     Effect.gen(function* () {
       const { out } = yield* exec(
@@ -110,7 +110,7 @@ describe("forge simulate", () => {
   );
 });
 
-describe("forge inspect", () => {
+describe("veyor inspect", () => {
   it.effect("prints stations and transitions", () =>
     Effect.gen(function* () {
       const { out } = yield* exec(Command.runWith(makeInspect(config), version)([]));

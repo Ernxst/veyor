@@ -1,11 +1,11 @@
-import { textObserver, type Machine } from "@forge/core";
+import { textObserver, type Machine } from "@veyor/core";
 import { Console, Effect, Option } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
-import { blueprintOf, type Assembly, type ForgeConfig } from "../config.ts";
+import { blueprintOf, type Assembly, type VeyorConfig } from "../config.ts";
 import { buildArgs, type BuiltArg } from "../lift.ts";
 import { decodeContext, errorMessage, resolveAssembly, usageFail } from "./common.ts";
 
-export function makeRun(config: ForgeConfig) {
+export function makeRun(config: VeyorConfig) {
   const machine = blueprintOf(config);
   const jsonSchema = machine.contract.Context["~standard"].jsonSchema.input({
     target: "draft-2020-12",
@@ -48,7 +48,7 @@ interface RunInput {
 }
 
 function handler(
-  config: ForgeConfig,
+  config: VeyorConfig,
   machine: Machine.Any,
   built: readonly BuiltArg[],
   input: RunInput
@@ -94,7 +94,7 @@ function observerOf(
   return flagValue(jsonFlag) === true ? ndjsonObserver : textObserver();
 }
 
-function report(config: ForgeConfig, result: Machine.Result<unknown, string>): Effect.Effect<void> {
+function report(config: VeyorConfig, result: Machine.Result<unknown, string>): Effect.Effect<void> {
   return Effect.gen(function* () {
     // @effect-diagnostics-next-line preferSchemaOverJson:off -- untyped boundary output, pretty-printed
     yield* Console.log(JSON.stringify({ task: result.task, context: result.context }, null, 2));

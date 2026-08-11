@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { Option } from "effect";
 import * as Schema from "effect/Schema";
 import { Argument, Flag } from "effect/unstable/cli";
-import type { ArgSpec, ForgeConfig } from "./config.ts";
+import type { ArgSpec, VeyorConfig } from "./config.ts";
 import { kindAt, type Kind } from "./jsonschema.ts";
 
 /** A mistake on the command line, rendered without a stack trace. */
@@ -30,7 +30,7 @@ const RESERVED = new Set(["assembly", "context", "seed", "json", "runs"]);
  * each spec becomes a CLI param whose primitive type is read from the
  * schema at its context path. Positionals come first, in position order.
  */
-export function buildArgs(config: ForgeConfig, jsonSchema: unknown): BuiltArg[] {
+export function buildArgs(config: VeyorConfig, jsonSchema: unknown): BuiltArg[] {
   const specs = [...(config.args ?? [])].sort(byPosition);
   const built = specs.map((spec) => buildArg(spec, jsonSchema));
   assertDistinctNames(built);
@@ -41,10 +41,10 @@ function assertDistinctNames(built: readonly BuiltArg[]): void {
   const seen = new Set<string>();
   for (const arg of built) {
     if (RESERVED.has(arg.id)) {
-      throw new Error(`forge.config: arg name "${arg.id}" is reserved; rename it with \`name\`.`);
+      throw new Error(`veyor.config: arg name "${arg.id}" is reserved; rename it with \`name\`.`);
     }
     if (seen.has(arg.id)) {
-      throw new Error(`forge.config: duplicate arg name "${arg.id}".`);
+      throw new Error(`veyor.config: duplicate arg name "${arg.id}".`);
     }
     seen.add(arg.id);
   }
@@ -152,7 +152,7 @@ function liftInlineJson(id: string): (raw: unknown) => unknown {
       return JSON.parse(raw);
     } catch {
       throw new UsageError({
-        message: `--${id}: expected JSON (or use \`from: "file"\` in forge.config).`,
+        message: `--${id}: expected JSON (or use \`from: "file"\` in veyor.config).`,
       });
     }
   };

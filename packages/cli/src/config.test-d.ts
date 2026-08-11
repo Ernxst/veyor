@@ -1,6 +1,6 @@
-import { actor, assemble, assign, machine, sink, task, transition } from "@forge/core";
-import { deterministic } from "@forge/core/actors";
-import { schema } from "@forge/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
+import { deterministic } from "@veyor/core/actors";
+import { schema } from "@veyor/core/schema/effect";
 import * as Schema from "effect/Schema";
 import { assertType, test } from "vitest";
 import { defineConfig } from "./config.ts";

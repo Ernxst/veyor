@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { getJsonSchema, type ForgeSchema } from "../lib/schema/index.ts";
+import { getJsonSchema, type VeyorSchema } from "../lib/schema/index.ts";
 import { Kind, Meta } from "../lib/types.ts";
 import type { Actor } from "./actor.ts";
 import type { Task } from "./task.ts";
@@ -21,7 +21,7 @@ export interface Machine<
   readonly retries: number;
   readonly actors: Task.ActorsOf<Tasks>;
   readonly contract: {
-    readonly Context: ForgeSchema<unknown, Context>;
+    readonly Context: VeyorSchema<unknown, Context>;
   };
 }
 
@@ -38,7 +38,7 @@ export declare namespace Machine {
     readonly retries: number;
     readonly actors: readonly Actor.Any[];
     readonly contract: {
-      readonly Context: ForgeSchema;
+      readonly Context: VeyorSchema;
     };
   }
 

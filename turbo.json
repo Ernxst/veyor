@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
-  "globalPassThroughEnv": ["FORGE_WORKSPACE"],
+  "globalPassThroughEnv": ["VEYOR_WORKSPACE"],
   "tasks": {
     "//#fmt": {
       "cache": false,

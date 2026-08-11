@@ -1,4 +1,4 @@
-import { defineConfig } from "@forge/cli";
+import { defineConfig } from "@veyor/cli";
 import headless from "./src/assemblies/headless.ts";
 import llm from "./src/assemblies/llm.ts";
 import local from "./src/assemblies/local.ts";
@@ -26,15 +26,15 @@ export default defineConfig({
   examples: [
     {
       command:
-        'forge run "Write a haiku file" --assembly local --backlog fixtures/haiku.json --budget 5',
+        'veyor run "Write a haiku file" --assembly local --backlog fixtures/haiku.json --budget 5',
       description: "Degenerate case: a trivial caller-supplied item, one model-grade call",
     },
     {
-      command: 'forge run "Ship dark mode" --assembly headless --budget 25',
+      command: 'veyor run "Ship dark mode" --assembly headless --budget 25',
       description: "Unattended delivery with policy authorities",
     },
     {
-      command: 'forge simulate "Ship the typed workflow runner" --runs 10000',
+      command: 'veyor simulate "Ship the typed workflow runner" --runs 10000',
       description: "Monte Carlo over the seeded probabilistic assembly",
     },
   ],

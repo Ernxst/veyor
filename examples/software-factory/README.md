@@ -1,6 +1,6 @@
 # Software delivery factory example
 
-This example models an autonomous software **delivery** factory with Forge: one typed blueprint that takes a task from plan to accepted delivery, assembled with different kinds of workers.
+This example models an autonomous software **delivery** factory with Veyor: one typed blueprint that takes a task from plan to accepted delivery, assembled with different kinds of workers.
 
 > [!IMPORTANT]
 > The probabilistic assembly runs end to end — see the Monte Carlo below. The LLM assembly type-checks against the same blueprint but shells out to the Codex and Claude Code CLIs, so it needs those installed and authenticated.
@@ -93,7 +93,7 @@ The design rests on a handful of commitments:
 Run the Monte Carlo:
 
 ```sh
-bun run forge simulate "Ship the typed workflow runner"
+bun run veyor simulate "Ship the typed workflow runner"
 ```
 
 At 10,000 seeded runs with a budget of 25 model-grade work units — including a 5% chance that any integration fails the mechanical gate: **~97% delivered**, ~3% abandoned, a mean spend of ~19, ~5.6 of 6 items integrated (~0.5 deferred inside successful runs — partial delivery working as designed), and ~1.4 plans per run. The budget is a visible lever: at budget 35 abandonment drops to ~1%. The degenerate case — a caller-supplied trivial item delivering at a spend of exactly 1 — is the first scenario in [`fixtures/`](./fixtures/README.md).
@@ -110,13 +110,13 @@ One entry point serves both a human and an agent caller:
 
 ```sh
 # Attended: you hold the authority boundaries at the terminal.
-bun run forge run "Ship the typed workflow runner" --budget 25
+bun run veyor run "Ship the typed workflow runner" --budget 25
 
 # Unattended: policy holds them; the run never blocks.
-bun run forge run "Ship the typed workflow runner" --budget 25 --assembly headless --backlog items.json
+bun run veyor run "Ship the typed workflow runner" --budget 25 --assembly headless --backlog items.json
 ```
 
-The command line is declared, not implemented: [`forge.config.ts`](./forge.config.ts) names the assemblies and maps `<task>`, `--budget`, `--backlog`, and `--decisions` onto context paths; the `forge` CLI reads each flag's type from the context schema and decodes the whole thing through it, so schema defaults fill every field the caller doesn't supply.
+The command line is declared, not implemented: [`veyor.config.ts`](./veyor.config.ts) names the assemblies and maps `<task>`, `--budget`, `--backlog`, and `--decisions` onto context paths; the `veyor` CLI reads each flag's type from the context schema and decodes the whole thing through it, so schema defaults fill every field the caller doesn't supply.
 
 The headless assembly ([`src/assemblies/headless.ts`](./src/assemblies/headless.ts)) swaps the terminal prompts for policy: questions receive a standing conservative answer, budget exhaustion defers the sick item instead of asking for more money, and a verified delivery self-accepts. The run prints its final context as JSON — backlog states, spend, the decision log, the review history — and exits nonzero unless it ended `done`.
 
@@ -134,6 +134,6 @@ Start in this order:
 4. [`src/assemblies/policy.ts`](./src/assemblies/policy.ts) — deterministic scheduling and integration.
 5. [`src/assemblies/probabilistic.ts`](./src/assemblies/probabilistic.ts) — the simulation assembly.
 6. [`src/assemblies/llm.ts`](./src/assemblies/llm.ts) — Codex, Claude Code, deterministic, and human implementations.
-7. [`forge.config.ts`](./forge.config.ts) — the command-line surface: assemblies, args, and examples.
+7. [`veyor.config.ts`](./veyor.config.ts) — the command-line surface: assemblies, args, and examples.
 
-See the [`@forge/core` README](../../packages/core) for the library model and the [Forge README](../../README.md) for the project overview and prior work.
+See the [`@veyor/core` README](../../packages/core) for the library model and the [Veyor README](../../README.md) for the project overview and prior work.

@@ -1,22 +1,22 @@
 import { pathToFileURL } from "node:url";
 import { Effect, FileSystem } from "effect";
 import * as Schema from "effect/Schema";
-import type { ForgeConfig } from "./config.ts";
+import type { VeyorConfig } from "./config.ts";
 
 export class ConfigError extends Schema.TaggedErrorClass<ConfigError>("ConfigError")(
   "ConfigError",
   { message: Schema.String }
 ) {}
 
-const CANDIDATES = ["forge.config.ts", "forge.config.js"];
+const CANDIDATES = ["veyor.config.ts", "veyor.config.js"];
 
 /**
- * Loads `forge.config.{ts,js}` from the working directory; resolves to
+ * Loads `veyor.config.{ts,js}` from the working directory; resolves to
  * `undefined` when there is none. Boundary adapter: the config is user
  * TypeScript, imported by the host runtime (Bun).
  */
 export const loadConfig: Effect.Effect<
-  ForgeConfig | undefined,
+  VeyorConfig | undefined,
   ConfigError,
   FileSystem.FileSystem
 > = Effect.gen(function* () {
@@ -47,7 +47,7 @@ function findConfigFile(fs: FileSystem.FileSystem): Effect.Effect<string | undef
   });
 }
 
-function assertConfig(module: unknown, file: string): Effect.Effect<ForgeConfig, ConfigError> {
+function assertConfig(module: unknown, file: string): Effect.Effect<VeyorConfig, ConfigError> {
   const config = defaultExportOf(module);
 
   if (!isConfigShaped(config)) {
@@ -68,7 +68,7 @@ function defaultExportOf(module: unknown): unknown {
   return "default" in module ? module.default : undefined;
 }
 
-function isConfigShaped(config: unknown): config is ForgeConfig {
+function isConfigShaped(config: unknown): config is VeyorConfig {
   if (typeof config !== "object" || config === null) return false;
   return "assemblies" in config;
 }

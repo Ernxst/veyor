@@ -1,5 +1,5 @@
 {
-  "extends": ["./tsconfig.app.json", "@forge/tsconfig/build"],
+  "extends": ["./tsconfig.app.json", "@veyor/tsconfig/build"],
   "compilerOptions": {
     "isolatedDeclarations": false
   }

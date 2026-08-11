@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
-import type { Actor } from "@forge/core";
-import { getJsonSchema } from "@forge/core/schema";
-import { JsonParse, JsonStringify } from "@forge/core/schema/effect";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { Actor } from "@veyor/core";
+import { getJsonSchema } from "@veyor/core/schema";
+import { JsonParse, JsonStringify } from "@veyor/core/schema/effect";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Stream from "effect/Stream";
@@ -45,7 +45,7 @@ interface ResultEnvelope {
 }
 
 /**
- * Runs a Forge actor through the local Claude Code CLI in headless mode.
+ * Runs a Veyor actor through the local Claude Code CLI in headless mode.
  * Based on https://code.claude.com/docs/en/headless
  */
 export function claude<A extends Actor.Any>(

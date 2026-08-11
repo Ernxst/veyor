@@ -1,7 +1,7 @@
-import type { Machine } from "@forge/core";
+import type { Machine } from "@veyor/core";
 import { Console, Effect, Option } from "effect";
 import * as Schema from "effect/Schema";
-import type { Assembly, ForgeConfig } from "../config.ts";
+import type { Assembly, VeyorConfig } from "../config.ts";
 import { contextFrom, describeIssues, UsageError, type BuiltArg } from "../lift.ts";
 
 /** Reports a command-line mistake and marks the process failed — no stack trace. */
@@ -17,7 +17,7 @@ export function usageFail(lines: readonly string[]): Effect.Effect<undefined> {
 
 /** The assembly to use: `--assembly`, else the config's default, else the only one. */
 export function resolveAssembly(
-  config: ForgeConfig,
+  config: VeyorConfig,
   flagged: Option.Option<unknown>,
   configured: string | undefined
 ): { name: string; assembly: Assembly } | UsageError {

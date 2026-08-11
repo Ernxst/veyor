@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
-import type { Actor } from "@forge/core";
-import { getJsonSchema } from "@forge/core/schema";
-import { JsonParse, JsonStringify } from "@forge/core/schema/effect";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { Actor } from "@veyor/core";
+import { getJsonSchema } from "@veyor/core/schema";
+import { JsonParse, JsonStringify } from "@veyor/core/schema/effect";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -51,7 +51,7 @@ export function codex<A extends Actor.Any>(
           const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
           yield* Effect.logDebug(`[codex][${model}] Creating temporary directory`);
-          const directory = yield* fs.makeTempDirectoryScoped({ prefix: "forge-codex-" });
+          const directory = yield* fs.makeTempDirectoryScoped({ prefix: "veyor-codex-" });
           yield* Effect.logDebug(`[codex][${model}] Created temporary directory`);
 
           const schemaFile = `${directory}/${actor.name}.output.schema.json`;

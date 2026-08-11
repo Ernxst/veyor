@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
-import type { Actor } from "@forge/core";
-import { getJsonSchema } from "@forge/core/schema";
-import { JsonParse, JsonStringify } from "@forge/core/schema/effect";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { Actor } from "@veyor/core";
+import { getJsonSchema } from "@veyor/core/schema";
+import { JsonParse, JsonStringify } from "@veyor/core/schema/effect";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Stream from "effect/Stream";
@@ -29,7 +29,7 @@ export class OpencodeValidationError extends Data.TaggedError("OpencodeValidatio
 }> {}
 
 /**
- * Runs a Forge actor through the local opencode CLI in non-interactive mode
+ * Runs a Veyor actor through the local opencode CLI in non-interactive mode
  * (`opencode run`). opencode has no schema-enforced output, so the contract
  * is stated in the prompt and enforced by validation — a failure throws, and
  * the machine's retry policy re-invokes the worker.

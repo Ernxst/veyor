@@ -1,23 +1,23 @@
 {
-  "name": "@forge/software-factory",
+  "name": "@veyor/software-factory",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "forge": "forge",
+    "veyor": "veyor",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
-    "@forge/anthropic": "workspace:*",
-    "@forge/cli": "workspace:*",
-    "@forge/core": "workspace:*",
-    "@forge/openai": "workspace:*",
-    "@forge/opencode": "workspace:*",
+    "@veyor/anthropic": "workspace:*",
+    "@veyor/cli": "workspace:*",
+    "@veyor/core": "workspace:*",
+    "@veyor/openai": "workspace:*",
+    "@veyor/opencode": "workspace:*",
     "effect": "4.0.0-beta.103"
   },
   "devDependencies": {
-    "@forge/tsconfig": "workspace:*",
     "@types/node": "26.1.2",
+    "@veyor/tsconfig": "workspace:*",
     "typescript": "7.0.2"
   }
 }

@@ -1,19 +1,19 @@
-# Forge
+# Veyor
 
-Forge is a TypeScript library for describing software factories as typed workflow blueprints with replaceable workers.
+Veyor is a TypeScript library for describing software factories as typed workflow blueprints with replaceable workers.
 
-A Forge blueprint describes the work: its context, tasks, transitions, actors, and runtime contracts. An assembly supplies the workers. The same blueprint can use deterministic functions, terminal prompts, AI models, Codex agents, or probabilistic stand-ins without changing the workflow itself.
+A Veyor blueprint describes the work: its context, tasks, transitions, actors, and runtime contracts. An assembly supplies the workers. The same blueprint can use deterministic functions, terminal prompts, AI models, Codex agents, or probabilistic stand-ins without changing the workflow itself.
 
-That split is Forge's core idea: design the factory before choosing the cost, capability, and autonomy of its workers.
+That split is Veyor's core idea: design the factory before choosing the cost, capability, and autonomy of its workers.
 
 > [!IMPORTANT]
-> Forge is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, runner, and `forge` CLI exist and run end to end, but history and aggregation are not implemented. Treat the repository as a working library, not a production release.
+> Veyor is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, runner, and `veyor` CLI exist and run end to end, but history and aggregation are not implemented. Treat the repository as a working library, not a production release.
 
-## Why Forge?
+## Why Veyor?
 
 Suppose you want multi-step work — delivering software, most concretely — done by some mix of AI models, ordinary code, and people. The common approach is to hand the whole job to one AI agent in a loop and steer it with prompts. That works until you care about three things at once: **process** (nothing forces the agent to review before shipping — quality lives in a prompt it may ignore), **cost** (you learn what a run costs by paying for it, and an agent deciding its own next step spends expensive judgment on decisions that need none), and **predictability** (you cannot test the workflow without running the workers).
 
-Forge separates the process from the workers. You describe the workflow once — its steps, the allowed paths between them, and the exact shape of every input and output — as a typed **blueprint**. Then you **assemble** it by plugging a worker into each role: a plain function, an AI model, a coding agent in a terminal, a person, or a simulator. The blueprint enforces the process; the workers are interchangeable; the type system checks that nothing is missing before anything runs.
+Veyor separates the process from the workers. You describe the workflow once — its steps, the allowed paths between them, and the exact shape of every input and output — as a typed **blueprint**. Then you **assemble** it by plugging a worker into each role: a plain function, an AI model, a coding agent in a terminal, a person, or a simulator. The blueprint enforces the process; the workers are interchangeable; the type system checks that nothing is missing before anything runs.
 
 That separation is the whole idea, and it pays twice:
 
@@ -28,7 +28,7 @@ The supporting choices serve those two ideas:
 
 The result is a factory-first library: the durable artifact is the workflow and its contracts, not a prompt, provider, terminal layout, or one agent loop.
 
-**If you already know the landscape:** typed, state-machine-constrained agents are not new — [`statelyai/agent`](https://github.com/statelyai/agent) established the idea of a machine owning an agent's control flow, and Forge borrows it openly. Forge's own claim is the two points above: replaceable workers behind typed contracts, and simulation as an assembly. If you only need a model constrained by a state machine, use Stately Agent; Forge earns its place when you need the same workflow to survive changes in who — or what — does the work.
+**If you already know the landscape:** typed, state-machine-constrained agents are not new — [`statelyai/agent`](https://github.com/statelyai/agent) established the idea of a machine owning an agent's control flow, and Veyor borrows it openly. Veyor's own claim is the two points above: replaceable workers behind typed contracts, and simulation as an assembly. If you only need a model constrained by a state machine, use Stately Agent; Veyor earns its place when you need the same workflow to survive changes in who — or what — does the work.
 
 ## Core model
 
@@ -41,7 +41,7 @@ The result is a factory-first library: the durable artifact is the workflow and 
 | `machine`    | Combines context, tasks, and transitions into a reusable blueprint.                                 |
 | `assemble`   | Binds every actor in a blueprint to a concrete implementation and creates a factory implementation. |
 
-Every actor output must contain an `outcome: string`. Define `outcome` with a literal or literal union in the output schema so Forge can constrain each task's transitions to the outcomes its actors declare.
+Every actor output must contain an `outcome: string`. Define `outcome` with a literal or literal union in the output schema so Veyor can constrain each task's transitions to the outcomes its actors declare.
 
 ## Implementation status
 
@@ -54,8 +54,8 @@ Implemented today:
 - an XState compiler with task input derivation, actor-output updates to machine context, context-aware selection between several assignments, and guarded transitions that route on outcome plus context;
 - per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
 - `Factory.run(...)` validating the initial context, streaming progress events to an observer, and resolving with the final sink and context;
-- seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and `forge simulate`);
-- the [`forge` CLI](./packages/cli): a project declares its command-line surface in `forge.config.ts`, and `forge run`, `forge simulate`, and `forge inspect` derive flag types from the context schema and decode all input through it.
+- seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and `veyor simulate`);
+- the [`veyor` CLI](./packages/cli): a project declares its command-line surface in `veyor.config.ts`, and `veyor run`, `veyor simulate`, and `veyor inspect` derive flag types from the context schema and decode all input through it.
 
 Not implemented:
 
@@ -67,9 +67,9 @@ Not implemented:
 This small factory has one typed actor and one deterministic implementation:
 
 ```ts
-import { actor, assemble, assign, machine, sink, task, transition } from "@forge/core";
-import { deterministic } from "@forge/core/actors";
-import { schema } from "@forge/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
+import { deterministic } from "@veyor/core/actors";
+import { schema } from "@veyor/core/schema/effect";
 import * as Schema from "effect/Schema";
 
 const Context = schema(Schema.Struct({ objective: Schema.String }));
@@ -113,22 +113,22 @@ For the full design, see the [software factory example](./examples/software-fact
 
 | Package                                    | Role                                                                          |
 | ------------------------------------------ | ----------------------------------------------------------------------------- |
-| [`@forge/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters.  |
-| [`@forge/ai-effect`](./packages/ai-effect) | Effect AI language models as Forge actors.                                    |
-| [`@forge/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Forge actors.           |
-| [`@forge/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Forge actors.                    |
-| [`@forge/opencode`](./packages/opencode)   | opencode CLI implementations for Forge actors, including its free model tier. |
+| [`@veyor/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters.  |
+| [`@veyor/ai-effect`](./packages/ai-effect) | Effect AI language models as Veyor actors.                                    |
+| [`@veyor/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Veyor actors.           |
+| [`@veyor/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Veyor actors.                    |
+| [`@veyor/opencode`](./packages/opencode)   | opencode CLI implementations for Veyor actors, including its free model tier. |
 
-[`@forge/cli`](./packages/cli) hosts factories at the command line: `forge run`, `forge simulate`, and `forge inspect` over a project's `forge.config.ts`.
+[`@veyor/cli`](./packages/cli) hosts factories at the command line: `veyor run`, `veyor simulate`, and `veyor inspect` over a project's `veyor.config.ts`.
 
 ## Prior work
 
-Forge builds on two projects that solve adjacent parts of the same problem:
+Veyor builds on two projects that solve adjacent parts of the same problem:
 
-- [`swarm-forge`](https://github.com/unclebob/swarm-forge/tree/squad) is a local, tmux-based orchestration system. It contributes the software-factory framing: named roles, separate worktrees, explicit handoffs, project-level rules, and observable multi-agent work. Forge moves that topology into an embeddable, typed library and adds contract-driven simulation.
-- [`statelyai/agent`](https://github.com/statelyai/agent) makes an XState machine own an LLM agent's control flow while the model can choose only legal events. Forge keeps that state-machine discipline, then makes the worker behind each typed actor replaceable. A worker can be a model, a human, deterministic code, or a simulator.
+- [`swarm-forge`](https://github.com/unclebob/swarm-forge/tree/squad) is a local, tmux-based orchestration system. It contributes the software-factory framing: named roles, separate worktrees, explicit handoffs, project-level rules, and observable multi-agent work. Veyor moves that topology into an embeddable, typed library and adds contract-driven simulation.
+- [`statelyai/agent`](https://github.com/statelyai/agent) makes an XState machine own an LLM agent's control flow while the model can choose only legal events. Veyor keeps that state-machine discipline, then makes the worker behind each typed actor replaceable. A worker can be a model, a human, deterministic code, or a simulator.
 
-In short, SwarmForge orchestrates agent terminals and Stately Agent constrains model-driven agents. Forge defines portable software factories whose workflow can be assembled, simulated, and run with different kinds of workers.
+In short, SwarmForge orchestrates agent terminals and Stately Agent constrains model-driven agents. Veyor defines portable software factories whose workflow can be assembled, simulated, and run with different kinds of workers.
 
 ## Development
 

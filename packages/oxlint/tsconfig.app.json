@@ -1,5 +1,5 @@
 {
-  "extends": ["@forge/tsconfig", "@forge/tsconfig/node", "@forge/tsconfig/package"],
+  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node", "@veyor/tsconfig/package"],
   "compilerOptions": {
     "allowJs": false
   },

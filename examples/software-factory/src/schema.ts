@@ -1,4 +1,4 @@
-import { schema } from "@forge/core/schema/effect";
+import { schema } from "@veyor/core/schema/effect";
 import { Effect } from "effect";
 import * as Schema from "effect/Schema";
 

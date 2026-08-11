@@ -2,7 +2,7 @@ import { Kind, Meta } from "../lib/types.ts";
 import type { Actor } from "./actor.ts";
 import type { Assignment } from "./assignment.ts";
 
-const Sink: unique symbol = Symbol.for("Forge.Sink");
+const Sink: unique symbol = Symbol.for("Veyor.Sink");
 
 // TODO: support a machine calling itself to build a real factory
 export interface Task<

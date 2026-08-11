@@ -1,11 +1,11 @@
 {
-  "name": "@forge/cli",
+  "name": "@veyor/cli",
   "version": "0.0.0",
   "description": "",
   "keywords": [],
-  "homepage": "https://github.com/Ernxst/forge",
+  "homepage": "https://github.com/Ernxst/veyor",
   "bugs": {
-    "url": "https://github.com/Ernxst/forge/issues"
+    "url": "https://github.com/Ernxst/veyor/issues"
   },
   "author": {
     "name": "Ernest Badu",
@@ -14,11 +14,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ernxst/forge.git",
+    "url": "git+https://github.com/Ernxst/veyor.git",
     "directory": "packages/cli"
   },
   "bin": {
-    "forge": "./dist/cli.mjs"
+    "veyor": "./dist/cli.mjs"
   },
   "files": [
     "dist",
@@ -48,15 +48,15 @@
   },
   "dependencies": {
     "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-    "@forge/core": "workspace:*",
     "@standard-schema/spec": "1.1.0",
+    "@veyor/core": "workspace:*",
     "effect": ">=4.0.0-beta.103 || >=4.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-    "@forge/tsconfig": "workspace:*",
     "@types/node": "26.1.2",
+    "@veyor/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "tsdown": "0.22.14",
     "typescript": "7.0.2",

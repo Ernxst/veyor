@@ -31,7 +31,7 @@ export default defineConfig({
   overrides: [
     {
       files: ["**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"],
-      jsPlugins: ["oxlint-plugin-complexity", "@forge/oxlint/plugins/style"],
+      jsPlugins: ["oxlint-plugin-complexity", "@veyor/oxlint/plugins/style"],
     },
     {
       files: [

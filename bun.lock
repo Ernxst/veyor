@@ -7,9 +7,9 @@
       "devDependencies": {
         "@commitlint/cli": "21.2.1",
         "@commitlint/config-conventional": "21.2.0",
-        "@forge/oxlint": "workspace:*",
-        "@forge/tsconfig": "workspace:*",
         "@types/node": "26.1.2",
+        "@veyor/oxlint": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "@vitest/browser-playwright": "4.1.10",
         "@vitest/coverage-istanbul": "4.1.10",
         "@vitest/eslint-plugin": "1.6.24",
@@ -28,33 +28,33 @@
       },
     },
     "examples/software-factory": {
-      "name": "@forge/software-factory",
+      "name": "@veyor/software-factory",
       "version": "0.0.0",
       "dependencies": {
-        "@forge/anthropic": "workspace:*",
-        "@forge/cli": "workspace:*",
-        "@forge/core": "workspace:*",
-        "@forge/openai": "workspace:*",
-        "@forge/opencode": "workspace:*",
+        "@veyor/anthropic": "workspace:*",
+        "@veyor/cli": "workspace:*",
+        "@veyor/core": "workspace:*",
+        "@veyor/openai": "workspace:*",
+        "@veyor/opencode": "workspace:*",
         "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
-        "@forge/tsconfig": "workspace:*",
         "@types/node": "26.1.2",
+        "@veyor/tsconfig": "workspace:*",
         "typescript": "7.0.2",
       },
     },
     "packages/ai-effect": {
-      "name": "@forge/ai-effect",
+      "name": "@veyor/ai-effect",
       "version": "0.0.0",
       "dependencies": {
-        "@forge/core": "workspace:*",
+        "@veyor/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/tsconfig": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -62,7 +62,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "^0.0.0",
+        "@veyor/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -70,20 +70,20 @@
       ],
     },
     "packages/anthropic": {
-      "name": "@forge/anthropic",
+      "name": "@veyor/anthropic",
       "version": "0.0.0",
       "dependencies": {
         "@effect/ai-anthropic": ">=4.0.0-beta.103 || >=4.0.0",
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/ai-effect": "workspace:*",
-        "@forge/core": "workspace:*",
         "@standard-schema/spec": "1.1.0",
+        "@veyor/ai-effect": "workspace:*",
+        "@veyor/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/tsconfig": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -91,7 +91,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "^0.0.0",
+        "@veyor/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -99,22 +99,22 @@
       ],
     },
     "packages/cli": {
-      "name": "@forge/cli",
+      "name": "@veyor/cli",
       "version": "0.0.0",
       "bin": {
-        "forge": "./dist/cli.mjs",
+        "veyor": "./dist/cli.mjs",
       },
       "dependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "workspace:*",
         "@standard-schema/spec": "1.1.0",
+        "@veyor/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/tsconfig": "workspace:*",
         "@types/node": "26.1.2",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -126,7 +126,7 @@
       },
     },
     "packages/core": {
-      "name": "@forge/core",
+      "name": "@veyor/core",
       "version": "0.0.0",
       "dependencies": {
         "@sinclair/typebox": "0.34.52",
@@ -140,8 +140,8 @@
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@ark/attest": "0.56.3",
-        "@forge/tsconfig": "workspace:*",
         "@types/node": "26.1.2",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -150,20 +150,20 @@
       },
     },
     "packages/openai": {
-      "name": "@forge/openai",
+      "name": "@veyor/openai",
       "version": "0.0.0",
       "dependencies": {
         "@effect/ai-openai": ">=4.0.0-beta.103 || >=4.0.0",
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/ai-effect": "workspace:*",
-        "@forge/core": "workspace:*",
         "@standard-schema/spec": "1.1.0",
+        "@veyor/ai-effect": "workspace:*",
+        "@veyor/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/tsconfig": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -171,7 +171,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "^0.0.0",
+        "@veyor/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -179,18 +179,18 @@
       ],
     },
     "packages/opencode": {
-      "name": "@forge/opencode",
+      "name": "@veyor/opencode",
       "version": "0.0.0",
       "dependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "workspace:*",
         "@standard-schema/spec": "1.1.0",
+        "@veyor/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/tsconfig": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -198,7 +198,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@forge/core": "^0.0.0",
+        "@veyor/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -206,16 +206,16 @@
       ],
     },
     "packages/oxlint": {
-      "name": "@forge/oxlint",
+      "name": "@veyor/oxlint",
       "version": "0.0.0",
       "devDependencies": {
-        "@forge/tsconfig": "workspace:*",
+        "@veyor/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "typescript": "7.0.2",
       },
     },
     "packages/tsconfig": {
-      "name": "@forge/tsconfig",
+      "name": "@veyor/tsconfig",
       "version": "0.0.0",
       "devDependencies": {
         "@effect/language-service": "0.87.1",
@@ -365,24 +365,6 @@
     "@eslint/object-schema": ["@eslint/object-schema@3.0.5", "", {}, "sha512-vqTaUEgxzm+YDSdElad6PiRoX4t8VGDjCtt05zn4nU810UIx/uNEV7/lZJ6KwFThKZOzOxzXy48da+No7HZaMw=="],
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.7.2", "", { "dependencies": { "@eslint/core": "^1.2.1", "levn": "^0.4.1" } }, "sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A=="],
-
-    "@forge/ai-effect": ["@forge/ai-effect@workspace:packages/ai-effect"],
-
-    "@forge/anthropic": ["@forge/anthropic@workspace:packages/anthropic"],
-
-    "@forge/cli": ["@forge/cli@workspace:packages/cli"],
-
-    "@forge/core": ["@forge/core@workspace:packages/core"],
-
-    "@forge/openai": ["@forge/openai@workspace:packages/openai"],
-
-    "@forge/opencode": ["@forge/opencode@workspace:packages/opencode"],
-
-    "@forge/oxlint": ["@forge/oxlint@workspace:packages/oxlint"],
-
-    "@forge/software-factory": ["@forge/software-factory@workspace:examples/software-factory"],
-
-    "@forge/tsconfig": ["@forge/tsconfig@workspace:packages/tsconfig"],
 
     "@humanfs/core": ["@humanfs/core@0.19.2", "", { "dependencies": { "@humanfs/types": "^0.15.0" } }, "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA=="],
 
@@ -727,6 +709,24 @@
     "@typescript/vfs": ["@typescript/vfs@1.6.1", "", { "dependencies": { "debug": "^4.1.1" }, "peerDependencies": { "typescript": "*" } }, "sha512-JwoxboBh7Oz1v38tPbkrZ62ZXNHAk9bJ7c9x0eI5zBfBnBYGhURdbnh7Z4smN/MV48Y5OCcZb58n972UtbazsA=="],
 
     "@valibot/to-json-schema": ["@valibot/to-json-schema@1.7.1", "", { "peerDependencies": { "valibot": "^1.4.0" } }, "sha512-3qkmU6KXWh8GIThEAW3kuRHPQBMjWkKy+Ppz3WkUucx53DTpOa6siMn4xDGSOhlVyMrDaJTCTMLYPZVAIk1P0A=="],
+
+    "@veyor/ai-effect": ["@veyor/ai-effect@workspace:packages/ai-effect"],
+
+    "@veyor/anthropic": ["@veyor/anthropic@workspace:packages/anthropic"],
+
+    "@veyor/cli": ["@veyor/cli@workspace:packages/cli"],
+
+    "@veyor/core": ["@veyor/core@workspace:packages/core"],
+
+    "@veyor/openai": ["@veyor/openai@workspace:packages/openai"],
+
+    "@veyor/opencode": ["@veyor/opencode@workspace:packages/opencode"],
+
+    "@veyor/oxlint": ["@veyor/oxlint@workspace:packages/oxlint"],
+
+    "@veyor/software-factory": ["@veyor/software-factory@workspace:examples/software-factory"],
+
+    "@veyor/tsconfig": ["@veyor/tsconfig@workspace:packages/tsconfig"],
 
     "@vitest/browser": ["@vitest/browser@4.1.10", "", { "dependencies": { "@blazediff/core": "1.9.1", "@vitest/mocker": "4.1.10", "@vitest/utils": "4.1.10", "magic-string": "^0.30.21", "pngjs": "^7.0.0", "sirv": "^3.0.2", "tinyrainbow": "^3.1.0", "ws": "^8.19.0" }, "peerDependencies": { "vitest": "4.1.10" } }, "sha512-UDwuWGwXj646CBx/bQHOaJSX7np0I8JL/UKQYa1e4QrVHH8VdWtx8eaOuf8sy0ShwDgR6NjJAsp5eF6vjF6qng=="],
 

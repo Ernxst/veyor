@@ -1,5 +1,5 @@
-import type { Actor } from "@forge/core";
-import { isEffectSchema } from "@forge/core/schema/effect";
+import type { Actor } from "@veyor/core";
+import { isEffectSchema } from "@veyor/core/schema/effect";
 import * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import { LanguageModel, type Model } from "effect/unstable/ai";

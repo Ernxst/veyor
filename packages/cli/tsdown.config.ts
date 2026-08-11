@@ -18,7 +18,7 @@ export default defineConfig([
     entry: { cli: "src/cli.ts" },
     platform: "node",
     tsconfig: "./tsconfig.build.json",
-    exports: { bin: { forge: "src/cli.ts" } },
+    exports: { bin: { veyor: "src/cli.ts" } },
     publint: true,
     failOnWarn: true,
     sourcemap: true,
