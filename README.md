@@ -7,7 +7,7 @@ A Forge blueprint describes the work: its context, tasks, transitions, actors, a
 That split is Forge's core idea: design the factory before choosing the cost, capability, and autonomy of its workers.
 
 > [!IMPORTANT]
-> Forge is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, and runner exist and run end to end, but history, aggregation, and the workflow CLI are not implemented. Treat the repository as a working library, not a production release.
+> Forge is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, runner, and `forge` CLI exist and run end to end, but history and aggregation are not implemented. Treat the repository as a working library, not a production release.
 
 ## Why Forge?
 
@@ -54,13 +54,13 @@ Implemented today:
 - an XState compiler with task input derivation, actor-output updates to machine context, context-aware selection between several assignments, and guarded transitions that route on outcome plus context;
 - per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
 - `Factory.run(...)` validating the initial context, streaming progress events to an observer, and resolving with the final sink and context;
-- seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and its Monte Carlo script).
+- seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and `forge simulate`);
+- the [`forge` CLI](./packages/cli): a project declares its command-line surface in `forge.config.ts`, and `forge run`, `forge simulate`, and `forge inspect` derive flag types from the context schema and decode all input through it.
 
 Not implemented:
 
 - run history, aggregation, and richer retry metadata;
-- a machine invoking another machine (or itself) as a task;
-- the `forge run` workflow CLI.
+- a machine invoking another machine (or itself) as a task.
 
 ## Example
 
@@ -119,7 +119,7 @@ For the full design, see the [software factory example](./examples/software-fact
 | [`@forge/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Forge actors.                    |
 | [`@forge/opencode`](./packages/opencode)   | opencode CLI implementations for Forge actors, including its free model tier. |
 
-The repository also contains an experimental [`@forge/cli`](./packages/cli), but it does not run Forge workflows yet.
+[`@forge/cli`](./packages/cli) hosts factories at the command line: `forge run`, `forge simulate`, and `forge inspect` over a project's `forge.config.ts`.
 
 ## Prior work
 
