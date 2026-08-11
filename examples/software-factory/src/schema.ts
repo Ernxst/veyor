@@ -73,6 +73,50 @@ export function unreachableItems(backlog: readonly Item[]): Set<string> {
   return blocked;
 }
 
+// --- Context operations -------------------------------------------------------
+
+/** The item currently on the line; tasks inside the item pipeline require one. */
+export function currentItem(context: Context): Item {
+  const item = context.backlog.find((candidate) => candidate.id === context.current);
+  if (item === undefined) {
+    throw new Error(`No backlog item is on the line (current: "${context.current}").`);
+  }
+
+  return item;
+}
+
+/** Meter model-grade work against the run budget. */
+export function charge(context: Context): Context {
+  return { ...context, spend: context.spend + 1 };
+}
+
+/** Item-pipeline work also meters against the current item's own bound. */
+export function chargeItem(context: Context): Context {
+  return { ...charge(context), itemSpend: context.itemSpend + 1 };
+}
+
+/** Park a blocked worker's question for the ask-user task. */
+export function raise(context: Context, question: string): Context {
+  return { ...context, pendingQuestion: question };
+}
+
+/** Park the current item; deferral cascades to its dependents at selection. */
+export function deferCurrent(context: Context): Context {
+  if (context.current === undefined) return context;
+
+  const { current: _parked, ...rest } = context;
+  return {
+    ...rest,
+    backlog: context.backlog.map((item) =>
+      item.id === context.current ? { ...item, status: "deferred" as const } : item
+    ),
+    attempts: 0,
+    itemSpend: 0,
+    reworked: false,
+    findings: [],
+  };
+}
+
 const ReviewHistory = Schema.Array(
   Schema.Struct({
     itemId: Schema.String,

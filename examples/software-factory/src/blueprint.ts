@@ -58,48 +58,6 @@ function itemSpendCap(item: Schema.Item): number {
   return { trivial: 3, standard: 6, complex: 9 }[item.complexity];
 }
 
-/** The item currently on the line; tasks inside the item pipeline require one. */
-function currentItem(context: Schema.Context): Schema.Item {
-  const item = context.backlog.find((candidate) => candidate.id === context.current);
-  if (item === undefined) {
-    throw new Error(`No backlog item is on the line (current: "${context.current}").`);
-  }
-
-  return item;
-}
-
-/** Meter model-grade work against the run budget. */
-function charge(context: Schema.Context): Schema.Context {
-  return { ...context, spend: context.spend + 1 };
-}
-
-/** Item-pipeline work also meters against the current item's own bound. */
-function chargeItem(context: Schema.Context): Schema.Context {
-  return { ...charge(context), itemSpend: context.itemSpend + 1 };
-}
-
-/** Park a blocked worker's question for the ask-user task. */
-function raise(context: Schema.Context, question: string): Schema.Context {
-  return { ...context, pendingQuestion: question };
-}
-
-/** Park the current item; deferral cascades to its dependents at selection. */
-function deferCurrent(context: Schema.Context): Schema.Context {
-  if (context.current === undefined) return context;
-
-  const { current: _parked, ...rest } = context;
-  return {
-    ...rest,
-    backlog: context.backlog.map((item) =>
-      item.id === context.current ? { ...item, status: "deferred" as const } : item
-    ),
-    attempts: 0,
-    itemSpend: 0,
-    reworked: false,
-    findings: [],
-  };
-}
-
 export const DeliveryBlueprint = machine({
   id: "software-delivery-factory",
   initial: "plan",
@@ -162,14 +120,14 @@ export const DeliveryBlueprint = machine({
         actors.TrivialImplementer,
         implementation({
           when: ({ context }) =>
-            currentItem(context).complexity === "trivial" && !reworkEntry(context),
+            Schema.currentItem(context).complexity === "trivial" && !reworkEntry(context),
         })
       ),
       assign(
         actors.Implementer,
         implementation({
           when: ({ context, meta }) => {
-            if (currentItem(context).complexity !== "standard") return false;
+            if (Schema.currentItem(context).complexity !== "standard") return false;
             if (meta.retryCount > 2) return false;
             return !reworkEntry(context);
           },
@@ -179,7 +137,7 @@ export const DeliveryBlueprint = machine({
         actors.SeniorImplementer,
         implementation({
           when: ({ context, meta }) => {
-            if (currentItem(context).complexity === "complex") return true;
+            if (Schema.currentItem(context).complexity === "complex") return true;
             if (meta.retryCount > 2) return true;
             return reworkEntry(context);
           },
@@ -198,7 +156,7 @@ export const DeliveryBlueprint = machine({
         actors.GateReviewer,
         review({
           metered: false,
-          when: ({ context }) => Schema.gateTier(currentItem(context)),
+          when: ({ context }) => Schema.gateTier(Schema.currentItem(context)),
         })
       ),
       assign(
@@ -206,8 +164,8 @@ export const DeliveryBlueprint = machine({
         review({
           metered: true,
           when: ({ context }) => {
-            if (Schema.gateTier(currentItem(context))) return false;
-            if (currentItem(context).risk === "high") return false;
+            if (Schema.gateTier(Schema.currentItem(context))) return false;
+            if (Schema.currentItem(context).risk === "high") return false;
             return !context.reworked;
           },
         })
@@ -218,7 +176,7 @@ export const DeliveryBlueprint = machine({
         actors.AdversarialReviewer,
         review({
           metered: true,
-          when: ({ context }) => currentItem(context).risk === "high" || context.reworked,
+          when: ({ context }) => Schema.currentItem(context).risk === "high" || context.reworked,
         })
       )
     ),
@@ -226,11 +184,11 @@ export const DeliveryBlueprint = machine({
     task(
       "refine",
       assign(actors.Refiner, {
-        input: (context) => ({ item: currentItem(context), findings: context.findings }),
+        input: (context) => ({ item: Schema.currentItem(context), findings: context.findings }),
         update: ({ context, output }) =>
           output.outcome === "blocked"
-            ? raise(chargeItem(context), output.question)
-            : chargeItem(context),
+            ? Schema.raise(Schema.chargeItem(context), output.question)
+            : Schema.chargeItem(context),
       })
     ),
 
@@ -241,7 +199,7 @@ export const DeliveryBlueprint = machine({
     task(
       "integrate",
       assign(actors.Integrator, {
-        input: (context) => ({ itemId: currentItem(context).id }),
+        input: (context) => ({ itemId: Schema.currentItem(context).id }),
         update: ({ context, output }) => {
           if (output.outcome === "failed") {
             return { ...context, findings: output.findings, attempts: context.attempts + 1 };
@@ -253,7 +211,7 @@ export const DeliveryBlueprint = machine({
             backlog: context.backlog.map((item) =>
               item.id === context.current ? { ...item, status: "integrated" as const } : item
             ),
-            unverifiedRisk: context.unverifiedRisk + riskPoints(currentItem(context)),
+            unverifiedRisk: context.unverifiedRisk + riskPoints(Schema.currentItem(context)),
             findings: [],
             attempts: 0,
             itemSpend: 0,
@@ -278,8 +236,8 @@ export const DeliveryBlueprint = machine({
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
         update: ({ context, output }) =>
           output.outcome === "blocked"
-            ? raise(charge(context), output.question)
-            : { ...charge(context), unverifiedRisk: 0 },
+            ? Schema.raise(Schema.charge(context), output.question)
+            : { ...Schema.charge(context), unverifiedRisk: 0 },
       })
     ),
 
@@ -313,7 +271,7 @@ export const DeliveryBlueprint = machine({
           }
 
           if (output.outcome === "split") return splitCurrent(context, output.fragments);
-          if (output.outcome === "defer") return deferCurrent(context);
+          if (output.outcome === "defer") return Schema.deferCurrent(context);
           return context;
         },
       })
@@ -349,7 +307,7 @@ export const DeliveryBlueprint = machine({
         // Continuing past an exhausted budget authorises another tranche;
         // deferring parks the current item and ships the rest.
         update: ({ context, output }) => {
-          if (output.outcome === "defer") return deferCurrent(context);
+          if (output.outcome === "defer") return Schema.deferCurrent(context);
           return output.outcome === "continue" && context.spend >= context.spendBudget
             ? { ...context, spendBudget: context.spend + 10 }
             : context;
@@ -400,12 +358,12 @@ export const DeliveryBlueprint = machine({
       on: "changesRequested",
       when: (context: Schema.Context) =>
         context.attempts < MAX_REFINE_ATTEMPTS &&
-        context.itemSpend < itemSpendCap(currentItem(context)),
+        context.itemSpend < itemSpendCap(Schema.currentItem(context)),
     }),
     transition("review", "implement", {
       on: "changesRequested",
       when: (context: Schema.Context) =>
-        !context.reworked && context.itemSpend < itemSpendCap(currentItem(context)),
+        !context.reworked && context.itemSpend < itemSpendCap(Schema.currentItem(context)),
     }),
     transition("review", "triage", { on: "changesRequested" }),
     transition("review", "triage", { on: "contradiction" }),
@@ -419,7 +377,7 @@ export const DeliveryBlueprint = machine({
       on: "failed",
       when: (context: Schema.Context) =>
         context.attempts < MAX_REFINE_ATTEMPTS &&
-        context.itemSpend < itemSpendCap(currentItem(context)),
+        context.itemSpend < itemSpendCap(Schema.currentItem(context)),
     }),
     transition("integrate", "triage", { on: "failed" }),
 
@@ -476,7 +434,7 @@ function splitCurrent(
 ): Schema.Context {
   if (context.current === undefined || fragments.length === 0) return context;
 
-  const original = currentItem(context);
+  const original = Schema.currentItem(context);
   const chain = fragments.map((fragment, index) => ({
     ...fragment,
     id: index === fragments.length - 1 ? original.id : `${original.id}/${index + 1}`,
@@ -532,7 +490,7 @@ function planning<A extends PlanActor>(options: {
         current: _offline,
         pendingQuestion: _parked,
         ...rest
-      } = metered ? charge(context) : context;
+      } = metered ? Schema.charge(context) : context;
       return {
         ...rest,
         backlog: [...integrated, ...planned],
@@ -552,16 +510,16 @@ function implementation<A extends ImplementationActor>(
   return {
     ...(options.when && { when: options.when }),
     input: (context) => ({
-      item: currentItem(context),
+      item: Schema.currentItem(context),
       decisions: context.decisions,
     }),
     update: ({ context, output }) => {
-      const charged = chargeItem(context);
+      const charged = Schema.chargeItem(context);
       // A rework entry starts from a clean slate at the senior tier.
       const based = reworkEntry(context)
         ? { ...charged, reworked: true, attempts: 0, findings: [] }
         : charged;
-      return output.outcome === "blocked" ? raise(based, output.question) : based;
+      return output.outcome === "blocked" ? Schema.raise(based, output.question) : based;
     },
   };
 }
@@ -575,18 +533,18 @@ function review<A extends ReviewActor>(options: {
   return {
     ...(when && { when }),
     input: (context) => {
-      const item = currentItem(context);
+      const item = Schema.currentItem(context);
       return { item, summary: `Work delivered for "${item.objective}"` };
     },
     update: ({ context, output }) => {
-      const charged = metered ? chargeItem(context) : context;
+      const charged = metered ? Schema.chargeItem(context) : context;
       if (output.outcome === "approved") {
         return {
           ...charged,
           reviewHistory: [
             ...context.reviewHistory,
             {
-              itemId: currentItem(context).id,
+              itemId: Schema.currentItem(context).id,
               outcome: "approved" as const,
               notes: output.notes,
               attempt: context.attempts + 1,
@@ -603,7 +561,7 @@ function review<A extends ReviewActor>(options: {
           reviewHistory: [
             ...context.reviewHistory,
             {
-              itemId: currentItem(context).id,
+              itemId: Schema.currentItem(context).id,
               outcome: "changesRequested" as const,
               notes: output.findings.join("; "),
               attempt: context.attempts + 1,
