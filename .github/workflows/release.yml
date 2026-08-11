@@ -49,18 +49,18 @@ jobs:
             || git tag "v${{ steps.bump.outputs.version }}"
           git push --follow-tags
 
-      # The per-package .npmrc holds an env reference, never the token
-      # itself; bun expands it at publish time.
+      # npm does not understand workspace:*, so a publish-time rewrite
+      # (never committed) pins workspace deps to the released versions.
+      # The .npmrc holds an env reference, never the token itself.
       - name: Publish to npm
         run: |
+          bun .github/scripts/prepare-publish.ts
+          echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "$HOME/.npmrc"
           for pkg in core cli ai-effect anthropic openai opencode; do
-            echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "packages/$pkg/.npmrc"
-            (cd "packages/$pkg" && bun publish --access public)
-            rm "packages/$pkg/.npmrc"
+            (cd "packages/$pkg" && npm publish --access public)
           done
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: GitHub release
         run: gh release create "v${{ steps.bump.outputs.version }}" --generate-notes
