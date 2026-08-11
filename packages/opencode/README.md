@@ -18,13 +18,13 @@ Models are addressed as `provider/model`, exactly as `opencode run --model` expe
 
 Unlike the Claude Code and Codex adapters, opencode has no schema-enforced output. The actor's output contract is stated in the prompt, extracted from the response (fenced or bare), and validated against the contract — a validation failure throws, which lands in the machine's retry policy. Cheap models plus contract validation plus retries is exactly the failure mode Veyor is built to absorb, which makes this adapter a good fit for low-cost dry runs of an otherwise expensive assembly.
 
-When every actor in an assembly shares the same model and working directory, capture that once with `opencodePreset(...)` instead of hand-rolling a wrapper that injects `cwd`:
+When every actor in an assembly shares the same model and working directory, capture that once with `opencode.preset(...)` instead of hand-rolling a wrapper that injects `cwd`:
 
 ```ts
-import { opencodePreset } from "@veyorhq/opencode";
+import { opencode } from "@veyorhq/opencode";
 import { Implementer } from "./actors.js";
 
-const worker = opencodePreset({
+const worker = opencode.preset({
   model: "opencode/deepseek-v4-flash-free",
   cwd: "/tmp/veyor-voyage",
 });
@@ -34,4 +34,4 @@ const ImplementerImpl = worker(Implementer, {
 });
 ```
 
-`opencodePreset` is sugar over `opencode` — per-call options (including `model`) shallow-merge over the preset, with the per-call value winning.
+`opencode.preset` is sugar over `opencode` — per-call options (including `model`) shallow-merge over the preset, with the per-call value winning.

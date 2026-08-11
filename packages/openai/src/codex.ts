@@ -212,7 +212,7 @@ function processCodexLine(line: string, report: ReportFn | undefined, throttle: 
 /**
  * Based on https://mintlify.wiki/openai/codex/cli/exec
  */
-export function codex<A extends Actor.Any>(
+function codexImpl<A extends Actor.Any>(
   actor: A,
   model: string,
   options: CodexOptions = {}
@@ -307,7 +307,7 @@ export function codex<A extends Actor.Any>(
   };
 }
 
-/** A `codexPreset` configuration: {@link CodexOptions} plus the model it captures. */
+/** A `codex.preset` configuration: {@link CodexOptions} plus the model it captures. */
 export interface CodexPreset extends CodexOptions {
   readonly model: string;
 }
@@ -317,7 +317,7 @@ export interface CodexPreset extends CodexOptions {
  * constructor for per-actor use:
  *
  * ```ts
- * const worker = codexPreset({ model: "gpt-5.6-sol", effort: "xhigh" });
+ * const worker = codex.preset({ model: "gpt-5.6-sol", effort: "xhigh" });
  * const PlannerImpl = worker(Planner, { instructions: "..." });
  * ```
  *
@@ -325,16 +325,26 @@ export interface CodexPreset extends CodexOptions {
  * `codex()` otherwise takes as a separate positional parameter. Sugar over {@link codex}; no logic
  * is duplicated.
  */
-export function codexPreset(preset: CodexPreset) {
+function codexPresetImpl(preset: CodexPreset) {
   const { model: presetModel, ...presetOptions } = preset;
   return function worker<A extends Actor.Any>(
     actor: A,
     options: Partial<CodexPreset> = {}
   ): Actor.ImplementationOf<A> {
     const { model = presetModel, ...rest } = options;
-    return codex(actor, model, { ...presetOptions, ...rest });
+    return codexImpl(actor, model, { ...presetOptions, ...rest });
   };
 }
+
+/** The callable signature of {@link codex} together with its {@link codex.preset} method. */
+export interface CodexWorker {
+  <A extends Actor.Any>(actor: A, model: string, options?: CodexOptions): Actor.ImplementationOf<A>;
+  readonly preset: (
+    preset: CodexPreset
+  ) => <A extends Actor.Any>(actor: A, options?: Partial<CodexPreset>) => Actor.ImplementationOf<A>;
+}
+
+export const codex: CodexWorker = Object.assign(codexImpl, { preset: codexPresetImpl });
 
 function buildCodexArgs(
   model: string,

@@ -43,7 +43,7 @@ export class OpencodeCeilingError extends Data.TaggedError("OpencodeCeilingError
  * the machine's retry policy re-invokes the worker.
  * Based on https://opencode.ai/docs/cli/
  */
-export function opencode<A extends Actor.Any>(
+function opencodeImpl<A extends Actor.Any>(
   actor: A,
   model: string,
   options: OpencodeOptions = {}
@@ -140,7 +140,7 @@ export function opencode<A extends Actor.Any>(
   };
 }
 
-/** An `opencodePreset` configuration: {@link OpencodeOptions} plus the model it captures. */
+/** An `opencode.preset` configuration: {@link OpencodeOptions} plus the model it captures. */
 export interface OpencodePreset extends OpencodeOptions {
   readonly model: string;
 }
@@ -150,7 +150,7 @@ export interface OpencodePreset extends OpencodeOptions {
  * for per-actor use:
  *
  * ```ts
- * const worker = opencodePreset({ model: FREE, cwd: workspace });
+ * const worker = opencode.preset({ model: FREE, cwd: workspace });
  * const ImplementerImpl = worker(Implementer, { instructions: "..." });
  * ```
  *
@@ -158,16 +158,35 @@ export interface OpencodePreset extends OpencodeOptions {
  * `opencode()` otherwise takes as a separate positional parameter. Sugar over {@link opencode}; no
  * logic is duplicated.
  */
-export function opencodePreset(preset: OpencodePreset) {
+function opencodePresetImpl(preset: OpencodePreset) {
   const { model: presetModel, ...presetOptions } = preset;
   return function worker<A extends Actor.Any>(
     actor: A,
     options: Partial<OpencodePreset> = {}
   ): Actor.ImplementationOf<A> {
     const { model = presetModel, ...rest } = options;
-    return opencode(actor, model, { ...presetOptions, ...rest });
+    return opencodeImpl(actor, model, { ...presetOptions, ...rest });
   };
 }
+
+/** The callable signature of {@link opencode} together with its {@link opencode.preset} method. */
+export interface OpencodeWorker {
+  <A extends Actor.Any>(
+    actor: A,
+    model: string,
+    options?: OpencodeOptions
+  ): Actor.ImplementationOf<A>;
+  readonly preset: (
+    preset: OpencodePreset
+  ) => <A extends Actor.Any>(
+    actor: A,
+    options?: Partial<OpencodePreset>
+  ) => Actor.ImplementationOf<A>;
+}
+
+export const opencode: OpencodeWorker = Object.assign(opencodeImpl, {
+  preset: opencodePresetImpl,
+});
 
 function buildOpencodeArgs(model: string, options: OpencodeOptions, prompt: string): string[] {
   const flags: readonly (readonly [flag: string, value: string | undefined])[] = [

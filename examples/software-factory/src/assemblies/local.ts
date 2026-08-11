@@ -6,7 +6,7 @@ import { mkdirSync } from "node:fs";
 // fixtures/README.md for reproducible scenarios.
 import { assemble } from "@veyorhq/core";
 import { acceptance, prompt, question, review } from "@veyorhq/core/actors";
-import { opencodePreset } from "@veyorhq/opencode";
+import { opencode } from "@veyorhq/opencode";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
@@ -17,7 +17,7 @@ const FREE = "opencode/deepseek-v4-flash-free";
 const workspace = process.env.VEYOR_WORKSPACE ?? "/tmp/veyor-voyage";
 mkdirSync(workspace, { recursive: true });
 
-const worker = opencodePreset({ model: FREE, cwd: workspace });
+const worker = opencode.preset({ model: FREE, cwd: workspace });
 
 const implementerInstructions = `
 Execute only the assigned backlog item, honouring its acceptance criteria and the recorded

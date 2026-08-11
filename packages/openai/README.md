@@ -62,13 +62,13 @@ The adapter:
 
 The Codex executable must be installed, authenticated, and available on `PATH`. The adapter defaults to the `workspace-write` sandbox; choose a narrower sandbox when the actor does not need writes.
 
-When several actors share the same model and effort, capture that once with `codexPreset(...)` instead of repeating it per actor:
+When several actors share the same model and effort, capture that once with `codex.preset(...)` instead of repeating it per actor:
 
 ```ts
-import { codexPreset } from "@veyorhq/openai/codex";
+import { codex } from "@veyorhq/openai/codex";
 import { Planner } from "./actors.js";
 
-const planWorker = codexPreset({
+const planWorker = codex.preset({
   model: "gpt-5.6-sol",
   effort: "xhigh",
   sandbox: "workspace-write",
@@ -79,7 +79,7 @@ const PlannerImpl = planWorker(Planner, {
 });
 ```
 
-`codexPreset` is sugar over `codex` — per-call options (including `model`) shallow-merge over the preset, with the per-call value winning.
+`codex.preset` is sugar over `codex` — per-call options (including `model`) shallow-merge over the preset, with the per-call value winning.
 
 ## Current limits
 

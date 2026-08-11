@@ -1,6 +1,6 @@
 ---
 name: openai-adapter-gotchas
-description: Gotchas for @veyorhq/openai — the two separate adapters (OpenAI API via Effect AI, Codex CLI), the exact-pinned effect beta, ceilingMs timeout semantics, sandbox modes, and codexPreset. Use when wiring or debugging an actor implementation from @veyorhq/openai.
+description: Gotchas for @veyorhq/openai — the two separate adapters (OpenAI API via Effect AI, Codex CLI), the exact-pinned effect beta, ceilingMs timeout semantics, sandbox modes, and codex.preset. Use when wiring or debugging an actor implementation from @veyorhq/openai.
 metadata:
   library: "@veyorhq/openai"
 ---
@@ -52,9 +52,9 @@ schema-enforced structured output — unlike the opencode adapter (see
 step here. A validation failure means the _contract_ is wrong for what the
 model can produce, not that extraction failed.
 
-## `codexPreset` is sugar, not a separate code path
+## `codex.preset` is sugar, not a separate code path
 
-When several actors share a model/effort/sandbox, `codexPreset({...})`
+When several actors share a model/effort/sandbox, `codex.preset({...})`
 captures that once and returns a constructor; per-call options shallow-merge
 over the preset with the per-call value winning. It's pure convenience over
 `codex(...)` — no behavior differs from calling `codex()` directly with the

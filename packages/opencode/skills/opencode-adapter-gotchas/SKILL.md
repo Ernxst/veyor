@@ -55,9 +55,9 @@ This is independent of the machine's own `retries` policy — treat a ceiling
 expiry as a failure for policy to retry, not a substitute for it. The child
 is also killed if the task's `AbortSignal` fires, independent of `ceilingMs`.
 
-## `opencodePreset` is sugar, not a separate code path
+## `opencode.preset` is sugar, not a separate code path
 
-When every actor in an assembly shares a model/cwd, `opencodePreset({...})`
+When every actor in an assembly shares a model/cwd, `opencode.preset({...})`
 captures that once; per-call options (including `model`) shallow-merge over
 the preset with the per-call value winning. No behavior differs from
 calling `opencode()` directly with the same merged options.

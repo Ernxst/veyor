@@ -288,7 +288,7 @@ function reportUsage(
  * Runs a Veyor actor through the local Claude Code CLI in headless mode.
  * Based on https://code.claude.com/docs/en/headless
  */
-export function claude<A extends Actor.Any>(
+function claudeImpl<A extends Actor.Any>(
   actor: A,
   model: string,
   options: ClaudeOptions = {}
@@ -375,7 +375,7 @@ export function claude<A extends Actor.Any>(
   };
 }
 
-/** A `claudePreset` configuration: {@link ClaudeOptions} plus the model it captures. */
+/** A `claude.preset` configuration: {@link ClaudeOptions} plus the model it captures. */
 export interface ClaudePreset extends ClaudeOptions {
   readonly model: string;
 }
@@ -385,7 +385,7 @@ export interface ClaudePreset extends ClaudeOptions {
  * constructor for per-actor use:
  *
  * ```ts
- * const worker = claudePreset({ model: "claude-opus-5", effort: "high", permissionMode: "dontAsk" });
+ * const worker = claude.preset({ model: "claude-opus-5", effort: "high", permissionMode: "dontAsk" });
  * const ReviewerImpl = worker(Reviewer, { instructions: "..." });
  * ```
  *
@@ -393,16 +393,33 @@ export interface ClaudePreset extends ClaudeOptions {
  * `claude()` otherwise takes as a separate positional parameter. Sugar over {@link claude}; no logic
  * is duplicated.
  */
-export function claudePreset(preset: ClaudePreset) {
+function claudePresetImpl(preset: ClaudePreset) {
   const { model: presetModel, ...presetOptions } = preset;
   return function worker<A extends Actor.Any>(
     actor: A,
     options: Partial<ClaudePreset> = {}
   ): Actor.ImplementationOf<A> {
     const { model = presetModel, ...rest } = options;
-    return claude(actor, model, { ...presetOptions, ...rest });
+    return claudeImpl(actor, model, { ...presetOptions, ...rest });
   };
 }
+
+/** The callable signature of {@link claude} together with its {@link claude.preset} method. */
+export interface ClaudeWorker {
+  <A extends Actor.Any>(
+    actor: A,
+    model: string,
+    options?: ClaudeOptions
+  ): Actor.ImplementationOf<A>;
+  readonly preset: (
+    preset: ClaudePreset
+  ) => <A extends Actor.Any>(
+    actor: A,
+    options?: Partial<ClaudePreset>
+  ) => Actor.ImplementationOf<A>;
+}
+
+export const claude: ClaudeWorker = Object.assign(claudeImpl, { preset: claudePresetImpl });
 
 function buildClaudeArgs(model: string, options: ClaudeOptions, schema: string): string[] {
   const flags: readonly (readonly [flag: string, value: string | undefined])[] = [

@@ -1,7 +1,7 @@
-import { claudePreset } from "@veyorhq/anthropic/claude";
+import { claude } from "@veyorhq/anthropic/claude";
 import { assemble } from "@veyorhq/core";
 import { acceptance, deterministic, prompt, question, review } from "@veyorhq/core/actors";
-import { codexPreset } from "@veyorhq/openai/codex";
+import { codex } from "@veyorhq/openai/codex";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
@@ -15,30 +15,30 @@ conflicts with the plan, report a contradiction. Do not expand scope or certify 
 
 // Claude workers share dontAsk permission; effort is the only per-role knob.
 // Codex tiers escalate luna -> terra -> sol, by model and effort.
-const fable5Xhigh = claudePreset({
+const fable5Xhigh = claude.preset({
   model: "claude-fable-5",
   effort: "xhigh",
   permissionMode: "dontAsk",
 });
-const fable5High = claudePreset({
+const fable5High = claude.preset({
   model: "claude-fable-5",
   effort: "high",
   permissionMode: "dontAsk",
 });
-const sonnet5High = claudePreset({
+const sonnet5High = claude.preset({
   model: "claude-sonnet-5",
   effort: "high",
   permissionMode: "dontAsk",
 });
-const opus5Xhigh = claudePreset({
+const opus5Xhigh = claude.preset({
   model: "claude-opus-5",
   effort: "xhigh",
   permissionMode: "dontAsk",
 });
-const lunaMedium = codexPreset({ model: "gpt-5.6-luna", effort: "medium" });
-const terraHigh = codexPreset({ model: "gpt-5.6-terra", effort: "high" });
-const solXhigh = codexPreset({ model: "gpt-5.6-sol", effort: "xhigh" });
-const solHigh = codexPreset({ model: "gpt-5.6-sol", effort: "high" });
+const lunaMedium = codex.preset({ model: "gpt-5.6-luna", effort: "medium" });
+const terraHigh = codex.preset({ model: "gpt-5.6-terra", effort: "high" });
+const solXhigh = codex.preset({ model: "gpt-5.6-sol", effort: "xhigh" });
+const solHigh = codex.preset({ model: "gpt-5.6-sol", effort: "high" });
 
 /** Every worker below the authority boundary, shared with the headless assembly. */
 export const workers = [
