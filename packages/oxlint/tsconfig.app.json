@@ -1,5 +1,5 @@
 {
-  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node", "@veyor/tsconfig/package"],
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/node", "@veyorhq/tsconfig/package"],
   "compilerOptions": {
     "allowJs": false
   },

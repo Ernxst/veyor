@@ -1,11 +1,11 @@
-# `@veyor/openai`
+# `@veyorhq/openai`
 
-`@veyor/openai` provides OpenAI-backed implementations for Veyor actors.
+`@veyorhq/openai` provides OpenAI-backed implementations for Veyor actors.
 
 It exposes two separate adapters:
 
-- `@veyor/openai/openai` creates an Effect AI model layer for `@veyor/ai-effect`.
-- `@veyor/openai/codex` runs a Veyor actor through the local Codex CLI.
+- `@veyorhq/openai/openai` creates an Effect AI model layer for `@veyorhq/ai-effect`.
+- `@veyorhq/openai/codex` runs a Veyor actor through the local Codex CLI.
 
 > [!IMPORTANT]
 > This package is under active development. It is private, remains at `0.0.0`, and is not published to a package registry.
@@ -15,8 +15,8 @@ It exposes two separate adapters:
 Use `openai(model)` with `agent(...)` when the actor should call the OpenAI API through Effect AI.
 
 ```ts
-import { agent } from "@veyor/ai-effect";
-import { openai } from "@veyor/openai/openai";
+import { agent } from "@veyorhq/ai-effect";
+import { openai } from "@veyorhq/openai/openai";
 import { Writer } from "./actors.js";
 
 const WriterImpl = agent(Writer, openai("gpt-4o-mini"), {
@@ -31,7 +31,7 @@ The adapter reads `OPENAI_API_KEY` through Effect `Config`. Missing or invalid c
 Use `codex(actor, model, options)` when a Codex task should implement the actor.
 
 ```ts
-import { codex } from "@veyor/openai/codex";
+import { codex } from "@veyorhq/openai/codex";
 import { Planner } from "./actors.js";
 
 const PlannerImpl = codex(Planner, "gpt-5.6-sol", {
@@ -66,7 +66,7 @@ The Codex executable must be installed, authenticated, and available on `PATH`. 
 
 - Both adapters require output contracts that can produce JSON Schema.
 - Codex aggregation currently returns an empty placeholder.
-- The OpenAI model adapter inherits the unfinished aggregation support from `@veyor/ai-effect`.
+- The OpenAI model adapter inherits the unfinished aggregation support from `@veyorhq/ai-effect`.
 - Retry, fallback, and budget policy belong to the workflow and are not added by this package.
 
-See [`@veyor/ai-effect`](../ai-effect), [`@veyor/core`](../core), and the [software factory example](../../examples/software-factory).
+See [`@veyorhq/ai-effect`](../ai-effect), [`@veyorhq/core`](../core), and the [software factory example](../../examples/software-factory).

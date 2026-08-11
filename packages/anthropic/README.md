@@ -1,11 +1,11 @@
-# `@veyor/anthropic`
+# `@veyorhq/anthropic`
 
-`@veyor/anthropic` provides Anthropic-backed implementations for Veyor actors.
+`@veyorhq/anthropic` provides Anthropic-backed implementations for Veyor actors.
 
 It exposes two separate adapters:
 
-- `@veyor/anthropic/anthropic` creates an Effect AI model layer for `@veyor/ai-effect`.
-- `@veyor/anthropic/claude` runs a Veyor actor through the local Claude Code CLI in headless mode.
+- `@veyorhq/anthropic/anthropic` creates an Effect AI model layer for `@veyorhq/ai-effect`.
+- `@veyorhq/anthropic/claude` runs a Veyor actor through the local Claude Code CLI in headless mode.
 
 > [!IMPORTANT]
 > This package is under active development. It is private, remains at `0.0.0`, and is not published to a package registry.
@@ -15,8 +15,8 @@ It exposes two separate adapters:
 Use `anthropic(model)` with `agent(...)` when the actor should call the Anthropic API through Effect AI.
 
 ```ts
-import { agent } from "@veyor/ai-effect";
-import { anthropic } from "@veyor/anthropic/anthropic";
+import { agent } from "@veyorhq/ai-effect";
+import { anthropic } from "@veyorhq/anthropic/anthropic";
 import { Writer } from "./actors.js";
 
 const WriterImpl = agent(Writer, anthropic("claude-opus-5"), {
@@ -31,7 +31,7 @@ The adapter reads `ANTHROPIC_API_KEY` through Effect `Config`. Missing or invali
 Use `claude(actor, model, options)` when a Claude Code session should implement the actor. The adapter drives the CLI's supported headless mode (`claude --print`) with your own local authentication, passes the actor's output contract via `--json-schema`, and validates the structured result.
 
 ```ts
-import { claude } from "@veyor/anthropic/claude";
+import { claude } from "@veyorhq/anthropic/claude";
 import { Reviewer } from "./actors.js";
 
 const ReviewerImpl = claude(Reviewer, "claude-opus-5", {

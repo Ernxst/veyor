@@ -136,4 +136,4 @@ Start in this order:
 6. [`src/assemblies/llm.ts`](./src/assemblies/llm.ts) — Codex, Claude Code, deterministic, and human implementations.
 7. [`veyor.config.ts`](./veyor.config.ts) — the command-line surface: assemblies, args, and examples.
 
-See the [`@veyor/core` README](../../packages/core) for the library model and the [Veyor README](../../README.md) for the project overview and prior work.
+See the [`@veyorhq/core` README](../../packages/core) for the library model and the [Veyor README](../../README.md) for the project overview and prior work.

@@ -1,4 +1,4 @@
 {
-  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/effect", "@veyor/tsconfig/node"],
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/effect", "@veyorhq/tsconfig/node"],
   "include": ["src"]
 }

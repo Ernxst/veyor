@@ -1,4 +1,4 @@
-import type { Machine, Task } from "@veyor/core";
+import type { Machine, Task } from "@veyorhq/core";
 import type { Command } from "effect/unstable/cli";
 
 /**

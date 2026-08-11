@@ -1,4 +1,4 @@
-import { isSink, type Machine, type Task } from "@veyor/core";
+import { isSink, type Machine, type Task } from "@veyorhq/core";
 import { Console, Effect, Option } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
 import { blueprintOf, type VeyorConfig } from "../config.ts";

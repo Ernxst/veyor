@@ -1,5 +1,5 @@
 import { OpenAiClient, OpenAiLanguageModel } from "@effect/ai-openai";
-import type { ModelLayer } from "@veyor/ai-effect";
+import type { ModelLayer } from "@veyorhq/ai-effect";
 import * as Config from "effect/Config";
 import * as Layer from "effect/Layer";
 import { FetchHttpClient } from "effect/unstable/http";

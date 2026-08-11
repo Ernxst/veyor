@@ -1,4 +1,4 @@
-import { deterministic } from "@veyor/core/actors";
+import { deterministic } from "@veyorhq/core/actors";
 import * as actors from "../actors.ts";
 import { readyItems, unreachableItems } from "../schema.ts";
 

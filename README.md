@@ -67,9 +67,9 @@ Not implemented:
 This small factory has one typed actor and one deterministic implementation:
 
 ```ts
-import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
-import { deterministic } from "@veyor/core/actors";
-import { schema } from "@veyor/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyorhq/core";
+import { deterministic } from "@veyorhq/core/actors";
+import { schema } from "@veyorhq/core/schema/effect";
 import * as Schema from "effect/Schema";
 
 const Context = schema(Schema.Struct({ objective: Schema.String }));
@@ -111,15 +111,15 @@ For the full design, see the [software factory example](./examples/software-fact
 
 ## Packages
 
-| Package                                    | Role                                                                          |
-| ------------------------------------------ | ----------------------------------------------------------------------------- |
-| [`@veyor/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters.  |
-| [`@veyor/ai-effect`](./packages/ai-effect) | Effect AI language models as Veyor actors.                                    |
-| [`@veyor/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Veyor actors.           |
-| [`@veyor/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Veyor actors.                    |
-| [`@veyor/opencode`](./packages/opencode)   | opencode CLI implementations for Veyor actors, including its free model tier. |
+| Package                                      | Role                                                                          |
+| -------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`@veyorhq/core`](./packages/core)           | Workflow model, XState compiler, actor implementations, and schema adapters.  |
+| [`@veyorhq/ai-effect`](./packages/ai-effect) | Effect AI language models as Veyor actors.                                    |
+| [`@veyorhq/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Veyor actors.           |
+| [`@veyorhq/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Veyor actors.                    |
+| [`@veyorhq/opencode`](./packages/opencode)   | opencode CLI implementations for Veyor actors, including its free model tier. |
 
-[`@veyor/cli`](./packages/cli) hosts factories at the command line: `veyor run`, `veyor simulate`, and `veyor inspect` over a project's `veyor.config.ts`.
+[`@veyorhq/cli`](./packages/cli) hosts factories at the command line: `veyor run`, `veyor simulate`, and `veyor inspect` over a project's `veyor.config.ts`.
 
 ## Prior work
 

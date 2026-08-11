@@ -4,9 +4,9 @@ import { mkdirSync } from "node:fs";
 //   bun run deliver "<task>" --factory local
 // Workers act inside an isolated workspace, never this repository — see
 // fixtures/README.md for reproducible scenarios.
-import { assemble } from "@veyor/core";
-import { acceptance, prompt, question, review } from "@veyor/core/actors";
-import { opencode, type OpencodeOptions } from "@veyor/opencode";
+import { assemble } from "@veyorhq/core";
+import { acceptance, prompt, question, review } from "@veyorhq/core/actors";
+import { opencode, type OpencodeOptions } from "@veyorhq/opencode";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";

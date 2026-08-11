@@ -1,6 +1,6 @@
-# `@veyor/core`
+# `@veyorhq/core`
 
-`@veyor/core` is the workflow model behind Veyor. It defines typed actors, tasks, transitions, and machines, then binds them to concrete workers with `assemble`.
+`@veyorhq/core` is the workflow model behind Veyor. It defines typed actors, tasks, transitions, and machines, then binds them to concrete workers with `assemble`.
 
 Use this package when you want the workflow to survive changes in model, provider, human role, or execution strategy.
 
@@ -19,9 +19,9 @@ The blueprint is the durable part. You can assemble it with deterministic code, 
 ## Example
 
 ```ts
-import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
-import { deterministic } from "@veyor/core/actors";
-import { schema } from "@veyor/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyorhq/core";
+import { deterministic } from "@veyorhq/core/actors";
+import { schema } from "@veyorhq/core/schema/effect";
 import * as Schema from "effect/Schema";
 
 const Context = schema(Schema.Struct({ objective: Schema.String }));
@@ -62,14 +62,14 @@ Every actor output must contain an `outcome: string`. Define `outcome` with a li
 
 ## Public entry points
 
-| Entry point                  | Purpose                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| `@veyor/core`                | `actor`, `task`, `sink`, `assign`, `transition`, `machine`, and `assemble`. |
-| `@veyor/core/actors`         | Deterministic, probabilistic, and terminal-prompt actor implementations.    |
-| `@veyor/core/schema`         | Standard Schema and JSON Schema helpers.                                    |
-| `@veyor/core/schema/effect`  | Effect Schema adapter and JSON encoding helpers.                            |
-| `@veyor/core/schema/typebox` | TypeBox adapter.                                                            |
-| `@veyor/core/schema/valibot` | Valibot adapter.                                                            |
+| Entry point                    | Purpose                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| `@veyorhq/core`                | `actor`, `task`, `sink`, `assign`, `transition`, `machine`, and `assemble`. |
+| `@veyorhq/core/actors`         | Deterministic, probabilistic, and terminal-prompt actor implementations.    |
+| `@veyorhq/core/schema`         | Standard Schema and JSON Schema helpers.                                    |
+| `@veyorhq/core/schema/effect`  | Effect Schema adapter and JSON encoding helpers.                            |
+| `@veyorhq/core/schema/typebox` | TypeBox adapter.                                                            |
+| `@veyorhq/core/schema/valibot` | Valibot adapter.                                                            |
 
 ## Actor implementations
 
@@ -89,7 +89,7 @@ const PlannerImpl = deterministic(Planner, ({ context }) => ({
 Use `probabilistic` to exercise a workflow without paying for real workers. It can generate values from an actor's JSON Schema, fail at a configured rate, choose weighted outcomes, and replay seeded runs.
 
 ```ts
-import { probabilistic } from "@veyor/core/actors";
+import { probabilistic } from "@veyorhq/core/actors";
 
 const PlannerSimulation = probabilistic(Planner, {
   seed: 42,
@@ -102,7 +102,7 @@ const PlannerSimulation = probabilistic(Planner, {
 Use `prompt` for a terminal-owned authority boundary. The package includes `question()` and `review()` formats.
 
 ```ts
-import { prompt, question } from "@veyor/core/actors";
+import { prompt, question } from "@veyorhq/core/actors";
 
 const AskUserImpl = prompt(AskUser, { format: question() });
 ```

@@ -1,4 +1,4 @@
-import type { Machine } from "@veyor/core";
+import type { Machine } from "@veyorhq/core";
 import { Console, Effect, Option } from "effect";
 import * as Schema from "effect/Schema";
 import type { Assembly, VeyorConfig } from "../config.ts";

@@ -1,4 +1,4 @@
-import type { Machine } from "@veyor/core";
+import type { Machine } from "@veyorhq/core";
 import { Console, Effect, Option, type Cause, type Result } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
 import { blueprintOf, soleSeededName, type Assembly, type VeyorConfig } from "../config.ts";

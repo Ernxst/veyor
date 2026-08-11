@@ -1,4 +1,4 @@
-import { defineConfig } from "@veyor/cli";
+import { defineConfig } from "@veyorhq/cli";
 import headless from "./src/assemblies/headless.ts";
 import llm from "./src/assemblies/llm.ts";
 import local from "./src/assemblies/local.ts";

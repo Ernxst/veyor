@@ -1,5 +1,5 @@
 {
-  "name": "@veyor/software-factory",
+  "name": "@veyorhq/software-factory",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,16 +8,16 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
-    "@veyor/anthropic": "workspace:*",
-    "@veyor/cli": "workspace:*",
-    "@veyor/core": "workspace:*",
-    "@veyor/openai": "workspace:*",
-    "@veyor/opencode": "workspace:*",
+    "@veyorhq/anthropic": "workspace:*",
+    "@veyorhq/cli": "workspace:*",
+    "@veyorhq/core": "workspace:*",
+    "@veyorhq/openai": "workspace:*",
+    "@veyorhq/opencode": "workspace:*",
     "effect": "4.0.0-beta.103"
   },
   "devDependencies": {
     "@types/node": "26.1.2",
-    "@veyor/tsconfig": "workspace:*",
+    "@veyorhq/tsconfig": "workspace:*",
     "typescript": "7.0.2"
   }
 }

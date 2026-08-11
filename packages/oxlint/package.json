@@ -1,5 +1,5 @@
 {
-  "name": "@veyor/oxlint",
+  "name": "@veyorhq/oxlint",
   "version": "0.0.0",
   "private": true,
   "files": [
@@ -28,7 +28,7 @@
     "---------------------------------------------------------------------------------": ""
   },
   "devDependencies": {
-    "@veyor/tsconfig": "workspace:*",
+    "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "typescript": "7.0.2"
   }

@@ -1,5 +1,5 @@
 {
-  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node"],
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/node"],
   "compilerOptions": {
     "composite": true
   },

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": ["@veyor/tsconfig", "@veyor/tsconfig/node"],
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/node"],
   "compilerOptions": {
     "composite": true
   },

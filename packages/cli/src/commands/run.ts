@@ -1,4 +1,4 @@
-import { textObserver, type Machine } from "@veyor/core";
+import { textObserver, type Machine } from "@veyorhq/core";
 import { Console, Effect, Option } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
 import { blueprintOf, type Assembly, type VeyorConfig } from "../config.ts";

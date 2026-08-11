@@ -1,5 +1,5 @@
 {
-  "name": "@veyor/anthropic",
+  "name": "@veyorhq/anthropic",
   "version": "0.0.0",
   "description": "",
   "keywords": [],
@@ -47,14 +47,14 @@
     "@effect/ai-anthropic": ">=4.0.0-beta.103 || >=4.0.0",
     "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
     "@standard-schema/spec": "1.1.0",
-    "@veyor/ai-effect": "workspace:*",
-    "@veyor/core": "workspace:*",
+    "@veyorhq/ai-effect": "workspace:*",
+    "@veyorhq/core": "workspace:*",
     "effect": ">=4.0.0-beta.103 || >=4.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-    "@veyor/tsconfig": "workspace:*",
+    "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "tsdown": "0.22.14",
     "typescript": "7.0.2",
@@ -62,11 +62,11 @@
   },
   "peerDependencies": {
     "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-    "@veyor/core": "^0.0.0",
+    "@veyorhq/core": "^0.0.0",
     "effect": ">=4.0.0-beta.103 || >=4.0.0"
   },
   "peerDependenciesMeta": {
-    "@veyor/core": {
+    "@veyorhq/core": {
       "optional": false
     },
     "@effect/platform-node": {

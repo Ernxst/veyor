@@ -1,5 +1,5 @@
-import { assemble } from "@veyor/core";
-import { deterministic } from "@veyor/core/actors";
+import { assemble } from "@veyorhq/core";
+import { deterministic } from "@veyorhq/core/actors";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import { workers } from "./llm.ts";

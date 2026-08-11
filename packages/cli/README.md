@@ -1,6 +1,6 @@
-# `@veyor/cli`
+# `@veyorhq/cli`
 
-`@veyor/cli` is the runtime host for Veyor factories: it takes a project's assembled factory and gives it an execution environment — input handling, progress rendering, results, exit codes, and simulation. Blueprints, assemblies, and policy stay in TypeScript; the CLI never defines them.
+`@veyorhq/cli` is the runtime host for Veyor factories: it takes a project's assembled factory and gives it an execution environment — input handling, progress rendering, results, exit codes, and simulation. Blueprints, assemblies, and policy stay in TypeScript; the CLI never defines them.
 
 > [!NOTE]
 > The CLI targets Bun: `veyor.config.ts` is imported directly by the host runtime.
@@ -10,7 +10,7 @@
 A project exposes itself to the CLI with a `veyor.config.ts` in its root:
 
 ```ts
-import { defineConfig } from "@veyor/cli";
+import { defineConfig } from "@veyorhq/cli";
 import headless from "./src/factories/headless.ts";
 import llm from "./src/factories/llm.ts";
 
@@ -32,7 +32,7 @@ An arg spec is purely presentational — where the value lands (`key`, a dot pat
 
 **Types come from the context schema, never from the config**: the CLI reads each arg's primitive type out of the machine's JSON Schema, parses argv accordingly, deep-merges the values (over an optional `--context base.json`), and decodes the result through the context schema — so schema defaults fill every field the caller doesn't supply, and validation errors are reported against the flag the user typed.
 
-This requires the machine's context schema to be JSON-Schema-capable. Natively Standard-Schema-compatible libraries (valibot, typebox) can be passed to `machine()` raw — they are upgraded on construction; Effect schemas come through `schema()` from `@veyor/core/schema/effect`.
+This requires the machine's context schema to be JSON-Schema-capable. Natively Standard-Schema-compatible libraries (valibot, typebox) can be passed to `machine()` raw — they are upgraded on construction; Effect schemas come through `schema()` from `@veyorhq/core/schema/effect`.
 
 ## Project structure
 
@@ -53,7 +53,7 @@ src/
 
 Each file imports only from the files above it; if an import points the other way, something is in the wrong place. `schema.ts` is the whole model — contracts _and_ the pure operations over them (the example's backlog queries live there, not in a helpers file). Growth is by splitting in place, not by new top-level concepts: a large `schema.ts` becomes `src/schema/` with one file per station, a large `actors.ts` splits the same way — the spine does not change.
 
-In a **monorepo**, the factory is a workspace package — conventionally `factory/` at the repo root, with exactly the shape above inside it and the `@veyor/*` and worker-adapter dependencies in its own `package.json`. `veyor` reads `veyor.config.ts` from the working directory, so runs happen in that package; give the root a forwarding script if you want to drive it from anywhere:
+In a **monorepo**, the factory is a workspace package — conventionally `factory/` at the repo root, with exactly the shape above inside it and the `@veyorhq/*` and worker-adapter dependencies in its own `package.json`. `veyor` reads `veyor.config.ts` from the working directory, so runs happen in that package; give the root a forwarding script if you want to drive it from anywhere:
 
 ```jsonc
 // root package.json

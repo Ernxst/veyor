@@ -1,6 +1,6 @@
-# `@veyor/ai-effect`
+# `@veyorhq/ai-effect`
 
-`@veyor/ai-effect` turns an Effect AI language model into a Veyor actor implementation.
+`@veyorhq/ai-effect` turns an Effect AI language model into a Veyor actor implementation.
 
 It is the bridge between a provider-neutral Veyor actor contract and Effect's `LanguageModel.generateObject` API. The model receives the actor input and must return a value that matches the actor's Effect Schema output.
 
@@ -10,9 +10,9 @@ It is the bridge between a provider-neutral Veyor actor contract and Effect's `L
 ## Usage
 
 ```ts
-import { agent } from "@veyor/ai-effect";
-import { assemble } from "@veyor/core";
-import { openai } from "@veyor/openai/openai";
+import { agent } from "@veyorhq/ai-effect";
+import { assemble } from "@veyorhq/core";
+import { openai } from "@veyorhq/openai/openai";
 import { Blueprint, Writer } from "./blueprint.js";
 
 const Factory = assemble(
@@ -33,11 +33,11 @@ The returned implementation can be passed directly to `assemble`.
 
 ## Output contracts
 
-The actor's output must use the Effect Schema adapter from `@veyor/core/schema/effect`.
+The actor's output must use the Effect Schema adapter from `@veyorhq/core/schema/effect`.
 
 ```ts
-import { actor } from "@veyor/core";
-import { schema } from "@veyor/core/schema/effect";
+import { actor } from "@veyorhq/core";
+import { schema } from "@veyorhq/core/schema/effect";
 import * as Schema from "effect/Schema";
 
 const Writer = actor("writer", {
@@ -47,11 +47,11 @@ const Writer = actor("writer", {
 });
 ```
 
-Other Standard Schema adapters are valid in `@veyor/core`, but this package currently rejects non-Effect output schemas.
+Other Standard Schema adapters are valid in `@veyorhq/core`, but this package currently rejects non-Effect output schemas.
 
 ## Providers
 
-`@veyor/ai-effect` does not choose a provider. Supply any compatible Effect AI model layer. Veyor's OpenAI integration is available through [`@veyor/openai`](../openai).
+`@veyorhq/ai-effect` does not choose a provider. Supply any compatible Effect AI model layer. Veyor's OpenAI integration is available through [`@veyorhq/openai`](../openai).
 
 ## Current limits
 
@@ -60,4 +60,4 @@ Other Standard Schema adapters are valid in `@veyor/core`, but this package curr
 - The adapter starts an Effect runtime at the Veyor actor boundary because the core actor contract is promise-based.
 - Provider failures remain visible to the caller; this package does not add retries or fallback models.
 
-See [`@veyor/core`](../core) for actor and machine definitions, or the [Veyor README](../../README.md) for the project overview.
+See [`@veyorhq/core`](../core) for actor and machine definitions, or the [Veyor README](../../README.md) for the project overview.

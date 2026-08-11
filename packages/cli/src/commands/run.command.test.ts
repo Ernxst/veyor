@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
 import { describe, expect, it } from "@effect/vitest";
-import { actor, assemble, assign, machine, sink, task, transition } from "@veyor/core";
-import { deterministic } from "@veyor/core/actors";
-import { schema } from "@veyor/core/schema/effect";
+import { actor, assemble, assign, machine, sink, task, transition } from "@veyorhq/core";
+import { deterministic } from "@veyorhq/core/actors";
+import { schema } from "@veyorhq/core/schema/effect";
 import { Effect, Layer } from "effect";
 import * as Schema from "effect/Schema";
 import { TestConsole } from "effect/testing";

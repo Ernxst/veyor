@@ -1,7 +1,7 @@
-import { claude } from "@veyor/anthropic/claude";
-import { assemble } from "@veyor/core";
-import { acceptance, deterministic, prompt, question, review } from "@veyor/core/actors";
-import { codex } from "@veyor/openai/codex";
+import { claude } from "@veyorhq/anthropic/claude";
+import { assemble } from "@veyorhq/core";
+import { acceptance, deterministic, prompt, question, review } from "@veyorhq/core/actors";
+import { codex } from "@veyorhq/openai/codex";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";

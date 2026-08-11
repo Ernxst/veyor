@@ -15,7 +15,7 @@ function buildCli(config: VeyorConfig | undefined) {
     return Command.make("veyor").pipe(
       Command.withDescription(
         "Run typed workflow factories. No veyor.config.ts found in this directory — " +
-          "create one with defineConfig({ assemblies, args }) from @veyor/cli."
+          "create one with defineConfig({ assemblies, args }) from @veyorhq/cli."
       )
     );
   }

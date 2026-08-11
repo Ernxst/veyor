@@ -1,8 +1,8 @@
 import { NodeServices } from "@effect/platform-node";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { Actor } from "@veyor/core";
-import { getJsonSchema } from "@veyor/core/schema";
-import { JsonParse, JsonStringify } from "@veyor/core/schema/effect";
+import type { Actor } from "@veyorhq/core";
+import { getJsonSchema } from "@veyorhq/core/schema";
+import { JsonParse, JsonStringify } from "@veyorhq/core/schema/effect";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";

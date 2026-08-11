@@ -13,7 +13,7 @@ function hasJsonSchema(schema: StandardSchemaV1): schema is VeyorSchema {
  * capable schemas pass through, known vendors (valibot, typebox) are upgraded
  * in place, anything else fails at definition time. Effect schemas are not
  * natively Standard Schema compatible — bring those through `schema()` from
- * `@veyor/core/schema/effect`.
+ * `@veyorhq/core/schema/effect`.
  */
 export function getJsonSchema<I, O>(schema: StandardSchemaV1<I, O>): VeyorSchema<I, O> {
   if (hasJsonSchema(schema)) return schema as VeyorSchema<I, O>;
@@ -24,6 +24,6 @@ export function getJsonSchema<I, O>(schema: StandardSchemaV1<I, O>): VeyorSchema
 
   throw new Error(
     "This schema does not support JSON Schema generation. " +
-      "Use a natively capable schema (valibot, typebox) or a @veyor/core schema adapter."
+      "Use a natively capable schema (valibot, typebox) or a @veyorhq/core schema adapter."
   );
 }

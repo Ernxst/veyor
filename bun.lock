@@ -8,8 +8,8 @@
         "@commitlint/cli": "21.2.1",
         "@commitlint/config-conventional": "21.2.0",
         "@types/node": "26.1.2",
-        "@veyor/oxlint": "workspace:*",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/oxlint": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "@vitest/browser-playwright": "4.1.10",
         "@vitest/coverage-istanbul": "4.1.10",
         "@vitest/eslint-plugin": "1.6.24",
@@ -28,33 +28,33 @@
       },
     },
     "examples/software-factory": {
-      "name": "@veyor/software-factory",
+      "name": "@veyorhq/software-factory",
       "version": "0.0.0",
       "dependencies": {
-        "@veyor/anthropic": "workspace:*",
-        "@veyor/cli": "workspace:*",
-        "@veyor/core": "workspace:*",
-        "@veyor/openai": "workspace:*",
-        "@veyor/opencode": "workspace:*",
+        "@veyorhq/anthropic": "workspace:*",
+        "@veyorhq/cli": "workspace:*",
+        "@veyorhq/core": "workspace:*",
+        "@veyorhq/openai": "workspace:*",
+        "@veyorhq/opencode": "workspace:*",
         "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@types/node": "26.1.2",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "typescript": "7.0.2",
       },
     },
     "packages/ai-effect": {
-      "name": "@veyor/ai-effect",
+      "name": "@veyorhq/ai-effect",
       "version": "0.0.0",
       "dependencies": {
-        "@veyor/core": "workspace:*",
+        "@veyorhq/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -62,7 +62,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/core": "^0.0.0",
+        "@veyorhq/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -70,20 +70,20 @@
       ],
     },
     "packages/anthropic": {
-      "name": "@veyor/anthropic",
+      "name": "@veyorhq/anthropic",
       "version": "0.0.0",
       "dependencies": {
         "@effect/ai-anthropic": ">=4.0.0-beta.103 || >=4.0.0",
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
         "@standard-schema/spec": "1.1.0",
-        "@veyor/ai-effect": "workspace:*",
-        "@veyor/core": "workspace:*",
+        "@veyorhq/ai-effect": "workspace:*",
+        "@veyorhq/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -91,7 +91,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/core": "^0.0.0",
+        "@veyorhq/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -99,7 +99,7 @@
       ],
     },
     "packages/cli": {
-      "name": "@veyor/cli",
+      "name": "@veyorhq/cli",
       "version": "0.0.0",
       "bin": {
         "veyor": "./dist/cli.mjs",
@@ -107,14 +107,14 @@
       "dependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
         "@standard-schema/spec": "1.1.0",
-        "@veyor/core": "workspace:*",
+        "@veyorhq/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
         "@types/node": "26.1.2",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -126,7 +126,7 @@
       },
     },
     "packages/core": {
-      "name": "@veyor/core",
+      "name": "@veyorhq/core",
       "version": "0.0.0",
       "dependencies": {
         "@sinclair/typebox": "0.34.52",
@@ -141,7 +141,7 @@
         "@arethetypeswrong/core": "0.18.5",
         "@ark/attest": "0.56.3",
         "@types/node": "26.1.2",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -150,20 +150,20 @@
       },
     },
     "packages/openai": {
-      "name": "@veyor/openai",
+      "name": "@veyorhq/openai",
       "version": "0.0.0",
       "dependencies": {
         "@effect/ai-openai": ">=4.0.0-beta.103 || >=4.0.0",
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
         "@standard-schema/spec": "1.1.0",
-        "@veyor/ai-effect": "workspace:*",
-        "@veyor/core": "workspace:*",
+        "@veyorhq/ai-effect": "workspace:*",
+        "@veyorhq/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -171,7 +171,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/core": "^0.0.0",
+        "@veyorhq/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -179,18 +179,18 @@
       ],
     },
     "packages/opencode": {
-      "name": "@veyor/opencode",
+      "name": "@veyorhq/opencode",
       "version": "0.0.0",
       "dependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
         "@standard-schema/spec": "1.1.0",
-        "@veyor/core": "workspace:*",
+        "@veyorhq/core": "workspace:*",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
         "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
         "typescript": "7.0.2",
@@ -198,7 +198,7 @@
       },
       "peerDependencies": {
         "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "@veyor/core": "^0.0.0",
+        "@veyorhq/core": "^0.0.0",
         "effect": ">=4.0.0-beta.103 || >=4.0.0",
       },
       "optionalPeers": [
@@ -206,16 +206,16 @@
       ],
     },
     "packages/oxlint": {
-      "name": "@veyor/oxlint",
+      "name": "@veyorhq/oxlint",
       "version": "0.0.0",
       "devDependencies": {
-        "@veyor/tsconfig": "workspace:*",
+        "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "typescript": "7.0.2",
       },
     },
     "packages/tsconfig": {
-      "name": "@veyor/tsconfig",
+      "name": "@veyorhq/tsconfig",
       "version": "0.0.0",
       "devDependencies": {
         "@effect/language-service": "0.87.1",
@@ -710,23 +710,23 @@
 
     "@valibot/to-json-schema": ["@valibot/to-json-schema@1.7.1", "", { "peerDependencies": { "valibot": "^1.4.0" } }, "sha512-3qkmU6KXWh8GIThEAW3kuRHPQBMjWkKy+Ppz3WkUucx53DTpOa6siMn4xDGSOhlVyMrDaJTCTMLYPZVAIk1P0A=="],
 
-    "@veyor/ai-effect": ["@veyor/ai-effect@workspace:packages/ai-effect"],
+    "@veyorhq/ai-effect": ["@veyorhq/ai-effect@workspace:packages/ai-effect"],
 
-    "@veyor/anthropic": ["@veyor/anthropic@workspace:packages/anthropic"],
+    "@veyorhq/anthropic": ["@veyorhq/anthropic@workspace:packages/anthropic"],
 
-    "@veyor/cli": ["@veyor/cli@workspace:packages/cli"],
+    "@veyorhq/cli": ["@veyorhq/cli@workspace:packages/cli"],
 
-    "@veyor/core": ["@veyor/core@workspace:packages/core"],
+    "@veyorhq/core": ["@veyorhq/core@workspace:packages/core"],
 
-    "@veyor/openai": ["@veyor/openai@workspace:packages/openai"],
+    "@veyorhq/openai": ["@veyorhq/openai@workspace:packages/openai"],
 
-    "@veyor/opencode": ["@veyor/opencode@workspace:packages/opencode"],
+    "@veyorhq/opencode": ["@veyorhq/opencode@workspace:packages/opencode"],
 
-    "@veyor/oxlint": ["@veyor/oxlint@workspace:packages/oxlint"],
+    "@veyorhq/oxlint": ["@veyorhq/oxlint@workspace:packages/oxlint"],
 
-    "@veyor/software-factory": ["@veyor/software-factory@workspace:examples/software-factory"],
+    "@veyorhq/software-factory": ["@veyorhq/software-factory@workspace:examples/software-factory"],
 
-    "@veyor/tsconfig": ["@veyor/tsconfig@workspace:packages/tsconfig"],
+    "@veyorhq/tsconfig": ["@veyorhq/tsconfig@workspace:packages/tsconfig"],
 
     "@vitest/browser": ["@vitest/browser@4.1.10", "", { "dependencies": { "@blazediff/core": "1.9.1", "@vitest/mocker": "4.1.10", "@vitest/utils": "4.1.10", "magic-string": "^0.30.21", "pngjs": "^7.0.0", "sirv": "^3.0.2", "tinyrainbow": "^3.1.0", "ws": "^8.19.0" }, "peerDependencies": { "vitest": "4.1.10" } }, "sha512-UDwuWGwXj646CBx/bQHOaJSX7np0I8JL/UKQYa1e4QrVHH8VdWtx8eaOuf8sy0ShwDgR6NjJAsp5eF6vjF6qng=="],
 

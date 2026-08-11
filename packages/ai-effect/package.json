@@ -1,5 +1,5 @@
 {
-  "name": "@veyor/ai-effect",
+  "name": "@veyorhq/ai-effect",
   "version": "0.0.0",
   "description": "",
   "keywords": [],
@@ -44,13 +44,13 @@
     "---------------------------------------------------------------------------------": ""
   },
   "dependencies": {
-    "@veyor/core": "workspace:*",
+    "@veyorhq/core": "workspace:*",
     "effect": ">=4.0.0-beta.103 || >=4.0.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
-    "@veyor/tsconfig": "workspace:*",
+    "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "tsdown": "0.22.14",
     "typescript": "7.0.2",
@@ -58,11 +58,11 @@
   },
   "peerDependencies": {
     "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-    "@veyor/core": "^0.0.0",
+    "@veyorhq/core": "^0.0.0",
     "effect": ">=4.0.0-beta.103 || >=4.0.0"
   },
   "peerDependenciesMeta": {
-    "@veyor/core": {
+    "@veyorhq/core": {
       "optional": false
     },
     "@effect/platform-node": {
