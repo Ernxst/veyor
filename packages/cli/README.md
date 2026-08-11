@@ -65,13 +65,16 @@ A factory that delivers the repository it lives in confines its workers to the r
 ## Commands
 
 ```sh
-veyor run [args] [--assembly <name>] [--context base.json] [--seed n] [--json]
+veyor run [args] [--assembly <name>] [--context base.json] [--seed n] [--json] [--quiet] [--record path] [--resume path]
 veyor simulate [args] [--runs n] [--seed n]
 veyor inspect [--mermaid]
 ```
 
-- **run** assembles the initial context, runs the factory with a progress observer on stderr (`--json` switches to NDJSON events for embedders), prints `{ task, context }` as JSON on stdout, and exits nonzero when the sink is not in `run.success`.
-- **simulate** runs the factory `--runs` times (run _i_ seeds a seeded assembly with `seed + i`) and prints a sink/failure tally. It defaults to the config's sole seed-parameterized assembly — never `run.assembly`, which could fire real workers.
+- **run** assembles the initial context, runs the factory with a progress observer on stderr (`--json` switches to NDJSON events for embedders, one line per event with an `at` epoch-ms timestamp), prints `{ task, context }` as JSON on stdout, and exits nonzero when the sink is not in `run.success`. Text mode brackets the run with a header (`▶ <machine id> · assembly <name>[ · seed <n>]`) and footer (`■ <sink> in <duration>`) line, and — outside `--json` — prints a status line if the run goes 60s without an event, repeating every further 60s of silence, so a long-running worker doesn't look hung.
+  - `--quiet` hides worker activity narration (tool runs, edits, text, usage) and shows only station-level events (`invoke`, `complete`, `transition`, `retry`, `error`).
+  - `--record <path>` writes the run as a crash-safe NDJSON record: a header line with the machine id and the decoded initial context, then one timestamped event per line, appended synchronously as the run progresses — so a killed process still leaves a usable record up to the last completed step.
+  - `--resume <path>` resumes a run from a record written by `--record`: the initial context comes from the header, events up to where the record ends are replayed (no workers re-invoked), and the run goes live from there. Combine with a fresh `--record` to leave a standalone record of the resumed run.
+- **simulate** runs the factory `--runs` times (run _i_ seeds a seeded assembly with `seed + i`) and prints a sink/failure tally, plus a `context` block of `{ mean, min, max }` for every numeric field in the context schema, aggregated across successful runs (e.g. `context: { spend: { mean, min, max }, ... }`). It defaults to the config's sole seed-parameterized assembly — never `run.assembly`, which could fire real workers.
 - **inspect** prints the blueprint — stations, actors, transitions — as text or a Mermaid state diagram.
 
 See the [software factory example](../../examples/software-factory) for a complete config and the [Veyor README](../../README.md) for the library this hosts.

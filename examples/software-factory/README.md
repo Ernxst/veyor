@@ -120,6 +120,8 @@ The command line is declared, not implemented: [`veyor.config.ts`](./veyor.confi
 
 The headless assembly ([`src/assemblies/headless.ts`](./src/assemblies/headless.ts)) swaps the terminal prompts for policy: questions receive a standing conservative answer, budget exhaustion defers the sick item instead of asking for more money, and a verified delivery self-accepts. The run prints its final context as JSON — backlog states, spend, the decision log, the review history — and exits nonzero unless it ended `done`.
 
+Runs narrate live on stderr as they go: tool use, model output, and per-step token usage from whichever CLI is doing the work, plus the deterministic policy stating its own reasoning at `select`, `integrate`, and triage. Pass `--quiet` to silence the narration and watch only station-level progress. A delivery run is worth protecting from a crash: `--record run.ndjson` writes a crash-safe record as the run goes, and `veyor run ... --resume run.ndjson` picks a killed or interrupted run back up from where the record ends, without re-invoking anything the record already covers.
+
 An agent caller's loop is stateless re-runs: supply the decomposition via `--backlog` (adopted for free), read the result, answer whatever surfaced in `deferred` and the decision log, and re-run with `--decisions` pre-seeded. The re-run loop is the conversation — no IPC, no session state.
 
 Reproducible maiden-voyage scenarios — fixture backlogs and the commands to run them on the free-tier `local` assembly — live in [`fixtures/`](./fixtures/README.md).

@@ -7,7 +7,7 @@ A Veyor blueprint describes the work: its context, tasks, transitions, actors, a
 That split is Veyor's core idea: design the factory before choosing the cost, capability, and autonomy of its workers.
 
 > [!IMPORTANT]
-> Veyor is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, runner, and `veyor` CLI exist and run end to end, but history and aggregation are not implemented. Treat the repository as a working library, not a production release.
+> Veyor is under active development. Its packages are private and remain at `0.0.0`; they are not ready to install from a package registry. The core model, actor adapters, runner, and `veyor` CLI exist and run end to end, including a full-fidelity run record and resume. Treat the repository as a working library, not a production release.
 
 ## Why Veyor?
 
@@ -54,12 +54,13 @@ Implemented today:
 - an XState compiler with task input derivation, actor-output updates to machine context, context-aware selection between several assignments, and guarded transitions that route on outcome plus context;
 - per-task retries with re-selection, so repeated failure can escalate to a more capable actor;
 - `Factory.run(...)` validating the initial context, streaming progress events to an observer, and resolving with the final sink and context;
+- a complete, replayable run record: `invoke` and `complete` events carry the derived input and validated output, workers narrate their own progress as `activity` events (tool runs, edits, model text, token usage — rendered as indented lines by the built-in text observer), and `run(context, { replay })` re-derives recorded invocations instead of re-running workers, going live past the end of the record;
 - seeded, reproducible simulation, including outcome weights derived from live context (see the [software factory example](./examples/software-factory) and `veyor simulate`);
-- the [`veyor` CLI](./packages/cli): a project declares its command-line surface in `veyor.config.ts`, and `veyor run`, `veyor simulate`, and `veyor inspect` derive flag types from the context schema and decode all input through it.
+- the [`veyor` CLI](./packages/cli): a project declares its command-line surface in `veyor.config.ts`, and `veyor run`, `veyor simulate`, and `veyor inspect` derive flag types from the context schema and decode all input through it; `veyor run --record` persists a crash-safe NDJSON run record and `--resume` continues a run from one.
 
 Not implemented:
 
-- run history, aggregation, and richer retry metadata;
+- richer aggregation over recorded runs (the event stream plus `--record` is the run record itself);
 - a machine invoking another machine (or itself) as a task.
 
 ## Example

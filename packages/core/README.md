@@ -140,7 +140,13 @@ A bare predicate remains shorthand for `{ when }`. Failed invocations are retrie
 
 ## Observing a run
 
-`run(context, { observer })` streams progress events — `invoke`, `complete` (with outcome and duration), `transition` (with the chosen edge), `retry`, and `error` — as the machine executes. This is the first slice of run history: enough to watch a live factory and attribute time and failures per actor.
+`run(context, { observer })` streams progress events — `invoke` (carrying the derived input), `activity`, `complete` (with outcome, the validated output, and duration), `transition` (with the chosen edge), `retry`, and `error` — as the machine executes. Because `invoke` and `complete` carry input and output, the event stream is a complete record of the run, not just a progress ticker.
+
+`activity` events narrate what a worker does inside a single invocation — tool runs, edits, model text, token usage — reported through `Task.Input.report(detail, data?)`, an optional hook passed to every invocation. Deterministic workers ignore it and stay silent; the agentic adapters (`@veyorhq/anthropic`, `@veyorhq/openai`, `@veyorhq/opencode`) call it as they stream their CLI's own events. The built-in `textObserver` renders `activity` events as indented `·` lines under the invoking task.
+
+### Replay
+
+`run(context, { replay })` takes an event list recorded from an earlier run over the _same_ initial context — typically the events collected by an `observer` on a prior call. Invocations the record covers return their recorded output instead of running the worker, re-emitted to the observer with `replayed: true`; the first invocation past the end of the record runs live, and later ones after it. If the machine selects an actor the record doesn't expect at that point — a changed blueprint, or an original run whose retries escalated across assignments — replay fails loudly rather than folding the wrong output into context.
 
 ## Transitions
 
@@ -156,7 +162,7 @@ Semantics: transitions are evaluated in declaration order and the first whose ou
 ## Current limits
 
 - The XState compiler is the only runtime compiler.
-- Run history, aggregation, and richer retry metadata are not implemented.
+- The event stream (plus the CLI's `--record`) is the run record; richer aggregation over recorded runs is not implemented.
 - A machine cannot yet invoke another machine (or itself) as a task.
 
 See the [software factory example](../../examples/software-factory) for the full blueprint and the [Veyor README](../../README.md) for the project overview.
