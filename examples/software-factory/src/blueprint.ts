@@ -1,6 +1,39 @@
-import { assign, machine, sink, task, transition } from "@veyorhq/core";
+import {
+  assign,
+  machine,
+  sink,
+  task,
+  transition,
+  type Actor,
+  type Assignment,
+} from "@veyorhq/core";
 import * as actors from "./actors.ts";
 import * as Schema from "./schema.ts";
+
+/**
+ * Shared actor shapes so the assignment helpers below type against the
+ * contract every tier of a station shares, not against one actor's literal
+ * name — each helper stays generic over the specific actor it configures so
+ * `assign` still infers the exact actor identity call sites pass in.
+ */
+type PlanActor = Actor<
+  string,
+  Actor.ContextOf<typeof actors.Planner>,
+  Actor.InputOf<typeof actors.Planner>,
+  Actor.OutputOf<typeof actors.Planner>
+>;
+type ImplementationActor = Actor<
+  string,
+  Actor.ContextOf<typeof actors.Implementer>,
+  Actor.InputOf<typeof actors.Implementer>,
+  Actor.OutputOf<typeof actors.Implementer>
+>;
+type ReviewActor = Actor<
+  string,
+  Actor.ContextOf<typeof actors.Reviewer>,
+  Actor.InputOf<typeof actors.Reviewer>,
+  Actor.OutputOf<typeof actors.Reviewer>
+>;
 
 /** How many refine cycles an item gets before its base is presumed wrong. */
 const MAX_REFINE_ATTEMPTS = 3;
@@ -83,14 +116,20 @@ export const DeliveryBlueprint = machine({
     // for free; the model planner only runs when there is planning to do.
     task(
       "plan",
-      assign(actors.PlanAdopter, {
-        when: ({ context }) => context.planVersion === 0 && context.backlog.length > 0,
-        ...planHooks({ metered: false }),
-      }),
-      assign(actors.Planner, {
-        when: ({ context }) => context.planVersion > 0 || context.backlog.length === 0,
-        ...planHooks({ metered: true }),
-      })
+      assign(
+        actors.PlanAdopter,
+        planning({
+          metered: false,
+          when: ({ context }) => context.planVersion === 0 && context.backlog.length > 0,
+        })
+      ),
+      assign(
+        actors.Planner,
+        planning({
+          metered: true,
+          when: ({ context }) => context.planVersion > 0 || context.backlog.length === 0,
+        })
+      )
     ),
 
     // Selection is deterministic: the next pending item whose dependencies are
@@ -119,25 +158,33 @@ export const DeliveryBlueprint = machine({
     // contradiction.
     task(
       "implement",
-      assign(actors.TrivialImplementer, {
-        when: ({ context }) =>
-          currentItem(context).complexity === "trivial" && !reworkEntry(context),
-        ...implementationHooks(),
-      }),
-      assign(actors.Implementer, {
-        when: ({ context, meta }) =>
-          currentItem(context).complexity === "standard" &&
-          meta.retryCount <= 2 &&
-          !reworkEntry(context),
-        ...implementationHooks(),
-      }),
-      assign(actors.SeniorImplementer, {
-        when: ({ context, meta }) =>
-          currentItem(context).complexity === "complex" ||
-          meta.retryCount > 2 ||
-          reworkEntry(context),
-        ...implementationHooks(),
-      })
+      assign(
+        actors.TrivialImplementer,
+        implementation({
+          when: ({ context }) =>
+            currentItem(context).complexity === "trivial" && !reworkEntry(context),
+        })
+      ),
+      assign(
+        actors.Implementer,
+        implementation({
+          when: ({ context, meta }) => {
+            if (currentItem(context).complexity !== "standard") return false;
+            if (meta.retryCount > 2) return false;
+            return !reworkEntry(context);
+          },
+        })
+      ),
+      assign(
+        actors.SeniorImplementer,
+        implementation({
+          when: ({ context, meta }) => {
+            if (currentItem(context).complexity === "complex") return true;
+            if (meta.retryCount > 2) return true;
+            return reworkEntry(context);
+          },
+        })
+      )
     ),
 
     // Review is unconditional after implementation — the quality floor is a
@@ -147,23 +194,33 @@ export const DeliveryBlueprint = machine({
     // an adversarial cross-vendor review.
     task(
       "review",
-      assign(actors.GateReviewer, {
-        when: ({ context }) => Schema.gateTier(currentItem(context)),
-        ...reviewHooks({ metered: false }),
-      }),
-      assign(actors.Reviewer, {
-        when: ({ context }) =>
-          !Schema.gateTier(currentItem(context)) &&
-          currentItem(context).risk !== "high" &&
-          !context.reworked,
-        ...reviewHooks({ metered: true }),
-      }),
+      assign(
+        actors.GateReviewer,
+        review({
+          metered: false,
+          when: ({ context }) => Schema.gateTier(currentItem(context)),
+        })
+      ),
+      assign(
+        actors.Reviewer,
+        review({
+          metered: true,
+          when: ({ context }) => {
+            if (Schema.gateTier(currentItem(context))) return false;
+            if (currentItem(context).risk === "high") return false;
+            return !context.reworked;
+          },
+        })
+      ),
       // Review escalates on evidence like implementation does: an item that
       // needed a rework has proven it is hard, whatever its predicted risk.
-      assign(actors.AdversarialReviewer, {
-        when: ({ context }) => currentItem(context).risk === "high" || context.reworked,
-        ...reviewHooks({ metered: true }),
-      })
+      assign(
+        actors.AdversarialReviewer,
+        review({
+          metered: true,
+          when: ({ context }) => currentItem(context).risk === "high" || context.reworked,
+        })
+      )
     ),
 
     task(
@@ -451,21 +508,20 @@ function acceptanceInput(context: Schema.Context) {
 }
 
 /** Spend meters model-grade work; adopting a caller-supplied backlog is free. */
-function planHooks({ metered }: { metered: boolean }) {
+function planning<A extends PlanActor>(options: {
+  metered: boolean;
+  when?: Assignment.Options<A>["when"];
+}): Assignment.Options<A> {
+  const { metered, when } = options;
   return {
-    input: (context: Schema.Context) => ({
+    ...(when && { when }),
+    input: (context) => ({
       prompt: context.input.prompt,
       files: context.input.files,
       decisions: context.decisions,
       backlog: context.backlog,
     }),
-    update: ({
-      context,
-      output,
-    }: {
-      context: Schema.Context;
-      output: { outcome: "planned"; backlog: readonly Schema.PlannedItem[] };
-    }) => {
+    update: ({ context, output }) => {
       const integrated = context.backlog.filter((item) => item.status === "integrated");
       const keep = new Set(integrated.map((item) => item.id));
       const planned = output.backlog
@@ -490,19 +546,16 @@ function planHooks({ metered }: { metered: boolean }) {
   };
 }
 
-function implementationHooks() {
+function implementation<A extends ImplementationActor>(
+  options: { when?: Assignment.Options<A>["when"] } = {}
+): Assignment.Options<A> {
   return {
-    input: (context: Schema.Context) => ({
+    ...(options.when && { when: options.when }),
+    input: (context) => ({
       item: currentItem(context),
       decisions: context.decisions,
     }),
-    update: ({
-      context,
-      output,
-    }: {
-      context: Schema.Context;
-      output: Schema.ImplementationOutput;
-    }) => {
+    update: ({ context, output }) => {
       const charged = chargeItem(context);
       // A rework entry starts from a clean slate at the senior tier.
       const based = reworkEntry(context)
@@ -514,13 +567,18 @@ function implementationHooks() {
 }
 
 /** Spend meters model-grade work; a deterministic gate review is free. */
-function reviewHooks({ metered }: { metered: boolean }) {
+function review<A extends ReviewActor>(options: {
+  metered: boolean;
+  when?: Assignment.Options<A>["when"];
+}): Assignment.Options<A> {
+  const { metered, when } = options;
   return {
-    input: (context: Schema.Context) => {
+    ...(when && { when }),
+    input: (context) => {
       const item = currentItem(context);
       return { item, summary: `Work delivered for "${item.objective}"` };
     },
-    update: ({ context, output }: { context: Schema.Context; output: Schema.ReviewOutput }) => {
+    update: ({ context, output }) => {
       const charged = metered ? chargeItem(context) : context;
       if (output.outcome === "approved") {
         return {
