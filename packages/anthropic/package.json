@@ -1,8 +1,18 @@
 {
   "name": "@veyorhq/anthropic",
   "version": "0.1.0",
-  "description": "",
-  "keywords": [],
+  "description": "Anthropic API and Claude Code CLI workers for Veyor actors.",
+  "keywords": [
+    "agents",
+    "ai",
+    "anthropic",
+    "claude",
+    "llm",
+    "software-factory",
+    "state-machine",
+    "veyor",
+    "workflow"
+  ],
   "homepage": "https://github.com/Ernxst/veyor",
   "bugs": {
     "url": "https://github.com/Ernxst/veyor/issues"

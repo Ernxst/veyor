@@ -1,8 +1,17 @@
 {
   "name": "@veyorhq/opencode",
   "version": "0.1.0",
-  "description": "",
-  "keywords": [],
+  "description": "opencode CLI workers for Veyor actors, including its free model tier.",
+  "keywords": [
+    "agents",
+    "ai",
+    "llm",
+    "opencode",
+    "software-factory",
+    "state-machine",
+    "veyor",
+    "workflow"
+  ],
   "homepage": "https://github.com/Ernxst/veyor",
   "bugs": {
     "url": "https://github.com/Ernxst/veyor/issues"

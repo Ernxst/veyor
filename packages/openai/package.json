@@ -1,8 +1,18 @@
 {
   "name": "@veyorhq/openai",
   "version": "0.1.0",
-  "description": "",
-  "keywords": [],
+  "description": "OpenAI API and Codex CLI workers for Veyor actors.",
+  "keywords": [
+    "agents",
+    "ai",
+    "codex",
+    "llm",
+    "openai",
+    "software-factory",
+    "state-machine",
+    "veyor",
+    "workflow"
+  ],
   "homepage": "https://github.com/Ernxst/veyor",
   "bugs": {
     "url": "https://github.com/Ernxst/veyor/issues"
