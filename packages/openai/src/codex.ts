@@ -307,6 +307,35 @@ export function codex<A extends Actor.Any>(
   };
 }
 
+/** A `codexPreset` configuration: {@link CodexOptions} plus the model it captures. */
+export interface CodexPreset extends CodexOptions {
+  readonly model: string;
+}
+
+/**
+ * Captures invariant worker configuration (model, effort, sandbox, ...) once, returning a
+ * constructor for per-actor use:
+ *
+ * ```ts
+ * const worker = codexPreset({ model: "gpt-5.6-sol", effort: "xhigh" });
+ * const PlannerImpl = worker(Planner, { instructions: "..." });
+ * ```
+ *
+ * Per-call options shallow-merge over the preset, with per-call winning — including `model`, which
+ * `codex()` otherwise takes as a separate positional parameter. Sugar over {@link codex}; no logic
+ * is duplicated.
+ */
+export function codexPreset(preset: CodexPreset) {
+  const { model: presetModel, ...presetOptions } = preset;
+  return function worker<A extends Actor.Any>(
+    actor: A,
+    options: Partial<CodexPreset> = {}
+  ): Actor.ImplementationOf<A> {
+    const { model = presetModel, ...rest } = options;
+    return codex(actor, model, { ...presetOptions, ...rest });
+  };
+}
+
 function buildCodexArgs(
   model: string,
   options: CodexOptions,

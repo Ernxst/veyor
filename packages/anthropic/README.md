@@ -43,3 +43,22 @@ const ReviewerImpl = claude(Reviewer, "claude-opus-5", {
 ```
 
 Options map onto CLI flags: `effort`, `instructions` (`--append-system-prompt`), `permissionMode`, `allowedTools`/`disallowedTools`, `maxBudgetUsd`, and `cwd`. Sessions run with `--no-session-persistence`; each invocation is a fresh, single-shot worker.
+
+When several actors share the same model, effort, and permission mode, capture that once with `claudePreset(...)` instead of repeating it per actor:
+
+```ts
+import { claudePreset } from "@veyorhq/anthropic/claude";
+import { Reviewer } from "./actors.js";
+
+const reviewWorker = claudePreset({
+  model: "claude-opus-5",
+  effort: "high",
+  permissionMode: "dontAsk",
+});
+
+const ReviewerImpl = reviewWorker(Reviewer, {
+  instructions: "Review the assignment against its acceptance criteria.",
+});
+```
+
+`claudePreset` is sugar over `claude` — per-call options (including `model`) shallow-merge over the preset, with the per-call value winning.

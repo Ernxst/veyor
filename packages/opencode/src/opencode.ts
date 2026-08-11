@@ -140,6 +140,35 @@ export function opencode<A extends Actor.Any>(
   };
 }
 
+/** An `opencodePreset` configuration: {@link OpencodeOptions} plus the model it captures. */
+export interface OpencodePreset extends OpencodeOptions {
+  readonly model: string;
+}
+
+/**
+ * Captures invariant worker configuration (model, cwd, agent, ...) once, returning a constructor
+ * for per-actor use:
+ *
+ * ```ts
+ * const worker = opencodePreset({ model: FREE, cwd: workspace });
+ * const ImplementerImpl = worker(Implementer, { instructions: "..." });
+ * ```
+ *
+ * Per-call options shallow-merge over the preset, with per-call winning — including `model`, which
+ * `opencode()` otherwise takes as a separate positional parameter. Sugar over {@link opencode}; no
+ * logic is duplicated.
+ */
+export function opencodePreset(preset: OpencodePreset) {
+  const { model: presetModel, ...presetOptions } = preset;
+  return function worker<A extends Actor.Any>(
+    actor: A,
+    options: Partial<OpencodePreset> = {}
+  ): Actor.ImplementationOf<A> {
+    const { model = presetModel, ...rest } = options;
+    return opencode(actor, model, { ...presetOptions, ...rest });
+  };
+}
+
 function buildOpencodeArgs(model: string, options: OpencodeOptions, prompt: string): string[] {
   const flags: readonly (readonly [flag: string, value: string | undefined])[] = [
     // opencode resolves its working directory itself and ignores the child

@@ -6,7 +6,7 @@ import { mkdirSync } from "node:fs";
 // fixtures/README.md for reproducible scenarios.
 import { assemble } from "@veyorhq/core";
 import { acceptance, prompt, question, review } from "@veyorhq/core/actors";
-import { opencode, type OpencodeOptions } from "@veyorhq/opencode";
+import { opencodePreset } from "@veyorhq/opencode";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
@@ -17,9 +17,7 @@ const FREE = "opencode/deepseek-v4-flash-free";
 const workspace = process.env.VEYOR_WORKSPACE ?? "/tmp/veyor-voyage";
 mkdirSync(workspace, { recursive: true });
 
-function worker(options: Omit<OpencodeOptions, "cwd">): OpencodeOptions {
-  return { ...options, cwd: workspace };
-}
+const worker = opencodePreset({ model: FREE, cwd: workspace });
 
 const implementerInstructions = `
 Execute only the assigned backlog item, honouring its acceptance criteria and the recorded
@@ -31,14 +29,10 @@ scope or certify completion.
 export default assemble(
   DeliveryBlueprint,
 
-  opencode(
-    actors.Planner,
-    FREE,
-    worker({
-      instructions:
-        "Decompose the task into a backlog of items with acceptance criteria, dependencies, complexity, and risk. Do not emit an item smaller than its ceremony.",
-    })
-  ),
+  worker(actors.Planner, {
+    instructions:
+      "Decompose the task into a backlog of items with acceptance criteria, dependencies, complexity, and risk. Do not emit an item smaller than its ceremony.",
+  }),
 
   policy.PlanAdopter,
   policy.Selector,
@@ -46,58 +40,34 @@ export default assemble(
   policy.GateVerifier,
   policy.AutoAcceptance,
 
-  opencode(actors.TrivialImplementer, FREE, worker({ instructions: implementerInstructions })),
-  opencode(actors.Implementer, FREE, worker({ instructions: implementerInstructions })),
-  opencode(actors.SeniorImplementer, FREE, worker({ instructions: implementerInstructions })),
+  worker(actors.TrivialImplementer, { instructions: implementerInstructions }),
+  worker(actors.Implementer, { instructions: implementerInstructions }),
+  worker(actors.SeniorImplementer, { instructions: implementerInstructions }),
 
-  opencode(
-    actors.GateReviewer,
-    FREE,
-    worker({
-      instructions:
-        "Confirm the delivered item passes basic checks; report approved or changesRequested with findings.",
-    })
-  ),
-  opencode(
-    actors.Reviewer,
-    FREE,
-    worker({
-      instructions:
-        "Review the delivered item against its acceptance criteria. Report approved, or changesRequested with concrete findings.",
-    })
-  ),
-  opencode(
-    actors.AdversarialReviewer,
-    FREE,
-    worker({
-      instructions:
-        "Adversarially challenge this high-risk item; seek evidence that falsifies its claims. Report approved or changesRequested with findings.",
-    })
-  ),
+  worker(actors.GateReviewer, {
+    instructions:
+      "Confirm the delivered item passes basic checks; report approved or changesRequested with findings.",
+  }),
+  worker(actors.Reviewer, {
+    instructions:
+      "Review the delivered item against its acceptance criteria. Report approved, or changesRequested with concrete findings.",
+  }),
+  worker(actors.AdversarialReviewer, {
+    instructions:
+      "Adversarially challenge this high-risk item; seek evidence that falsifies its claims. Report approved or changesRequested with findings.",
+  }),
 
-  opencode(
-    actors.Refiner,
-    FREE,
-    worker({
-      instructions: "Apply only the accepted findings. Report refined, blocked, or contradiction.",
-    })
-  ),
-  opencode(
-    actors.Verifier,
-    FREE,
-    worker({
-      instructions:
-        "Audit the completed backlog against the task. Report passed, or failed with the specific gaps as evidence.",
-    })
-  ),
-  opencode(
-    actors.Triage,
-    FREE,
-    worker({
-      instructions:
-        "Classify the repair: fix-item with a revised objective, split into fragments, defer, replan, or escalate. When spend >= spendBudget, prefer defer or escalate.",
-    })
-  ),
+  worker(actors.Refiner, {
+    instructions: "Apply only the accepted findings. Report refined, blocked, or contradiction.",
+  }),
+  worker(actors.Verifier, {
+    instructions:
+      "Audit the completed backlog against the task. Report passed, or failed with the specific gaps as evidence.",
+  }),
+  worker(actors.Triage, {
+    instructions:
+      "Classify the repair: fix-item with a revised objective, split into fragments, defer, replan, or escalate. When spend >= spendBudget, prefer defer or escalate.",
+  }),
 
   // Attended: you hold the authority boundaries while watching the maiden voyage.
   prompt(actors.AskUserQuestion, { format: question() }),

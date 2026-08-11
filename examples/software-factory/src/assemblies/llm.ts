@@ -1,7 +1,7 @@
-import { claude } from "@veyorhq/anthropic/claude";
+import { claudePreset } from "@veyorhq/anthropic/claude";
 import { assemble } from "@veyorhq/core";
 import { acceptance, deterministic, prompt, question, review } from "@veyorhq/core/actors";
-import { codex } from "@veyorhq/openai/codex";
+import { codexPreset } from "@veyorhq/openai/codex";
 import * as actors from "../actors.ts";
 import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
@@ -13,14 +13,39 @@ ambiguous in a way only the user can resolve, report blocked with the question; 
 conflicts with the plan, report a contradiction. Do not expand scope or certify completion.
 `;
 
+// Claude workers share dontAsk permission; effort is the only per-role knob.
+// Codex tiers escalate luna -> terra -> sol, by model and effort.
+const fable5Xhigh = claudePreset({
+  model: "claude-fable-5",
+  effort: "xhigh",
+  permissionMode: "dontAsk",
+});
+const fable5High = claudePreset({
+  model: "claude-fable-5",
+  effort: "high",
+  permissionMode: "dontAsk",
+});
+const sonnet5High = claudePreset({
+  model: "claude-sonnet-5",
+  effort: "high",
+  permissionMode: "dontAsk",
+});
+const opus5Xhigh = claudePreset({
+  model: "claude-opus-5",
+  effort: "xhigh",
+  permissionMode: "dontAsk",
+});
+const lunaMedium = codexPreset({ model: "gpt-5.6-luna", effort: "medium" });
+const terraHigh = codexPreset({ model: "gpt-5.6-terra", effort: "high" });
+const solXhigh = codexPreset({ model: "gpt-5.6-sol", effort: "xhigh" });
+const solHigh = codexPreset({ model: "gpt-5.6-sol", effort: "high" });
+
 /** Every worker below the authority boundary, shared with the headless assembly. */
 export const workers = [
   // Planning owns the model of the work: a backlog of items with acceptance
   // criteria and dependencies. On a replan it receives the current backlog
   // and the accumulated decisions as evidence.
-  claude(actors.Planner, "claude-fable-5", {
-    effort: "xhigh",
-    permissionMode: "dontAsk",
+  fable5Xhigh(actors.Planner, {
     instructions: `
 Investigate the task and repository evidence, then decompose the work into a backlog of
 independent items with explicit acceptance criteria, dependencies, complexity, and risk.
@@ -39,18 +64,9 @@ invalidates. Do not implement, review, or claim completion.
   policy.AutoAcceptance,
 
   // Execution: harder items and repeated failure escalate to more capable workers.
-  codex(actors.TrivialImplementer, "gpt-5.6-luna", {
-    effort: "medium",
-    instructions: implementerInstructions,
-  }),
-  codex(actors.Implementer, "gpt-5.6-terra", {
-    effort: "high",
-    instructions: implementerInstructions,
-  }),
-  codex(actors.SeniorImplementer, "gpt-5.6-sol", {
-    effort: "xhigh",
-    instructions: implementerInstructions,
-  }),
+  lunaMedium(actors.TrivialImplementer, { instructions: implementerInstructions }),
+  terraHigh(actors.Implementer, { instructions: implementerInstructions }),
+  solXhigh(actors.SeniorImplementer, { instructions: implementerInstructions }),
 
   // Independent evaluation — the reviewer scales with the stakes. Trivial
   // low-risk items get the deterministic quality gate (a real delivery
@@ -60,9 +76,7 @@ invalidates. Do not implement, review, or claim completion.
     outcome: "approved" as const,
     notes: `Quality gate passed for "${input.item.id}".`,
   })),
-  claude(actors.Reviewer, "claude-sonnet-5", {
-    effort: "high",
-    permissionMode: "dontAsk",
+  sonnet5High(actors.Reviewer, {
     instructions: `
 Review the delivered item against its acceptance criteria and engineering quality bar.
 Find concrete defects using observable artifacts rather than the implementer's conclusions.
@@ -70,9 +84,7 @@ If the item as specified conflicts with the plan, report a contradiction instead
 Do not modify the work or decide whether the overall task is complete.
 `,
   }),
-  claude(actors.AdversarialReviewer, "claude-opus-5", {
-    effort: "xhigh",
-    permissionMode: "dontAsk",
+  opus5Xhigh(actors.AdversarialReviewer, {
     instructions: `
 Independently challenge this high-risk item. Generate the smallest set of rival failure
 explanations that could materially change acceptance, then seek observable evidence capable
@@ -81,8 +93,7 @@ of falsifying the implementation's claims. Report concrete findings only.
   }),
 
   // Accepted correction
-  codex(actors.Refiner, "gpt-5.6-terra", {
-    effort: "high",
+  terraHigh(actors.Refiner, {
     instructions: `
 Apply only the accepted findings while preserving unaffected decisions and work.
 If evidence shows a finding invalidates the item's approach rather than requiring a local
@@ -92,8 +103,7 @@ resolved without a user-owned decision, report blocked with the question.
   }),
 
   // Verification certifies the whole delivery, once, against the plan.
-  codex(actors.Verifier, "gpt-5.6-sol", {
-    effort: "high",
+  solHigh(actors.Verifier, {
     instructions: `
 Audit the completed backlog against the original task. Determine whether every item's
 acceptance criteria have claim-matched evidence and the delivery is coherent as a whole.
@@ -103,9 +113,7 @@ Do not repair missing work.
   }),
 
   // Model repair and recovery
-  claude(actors.Triage, "claude-fable-5", {
-    effort: "high",
-    permissionMode: "dontAsk",
+  fable5High(actors.Triage, {
     instructions: `
 Diagnose why progress stopped and classify the repair: respecify the failing item
 (fix-item, with a revised objective), split it into smaller fragments, defer it so the
