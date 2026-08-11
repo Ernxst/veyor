@@ -3,7 +3,7 @@
 `@veyorhq/cli` is the runtime host for Veyor factories: it takes a project's assembled factory and gives it an execution environment — input handling, progress rendering, results, exit codes, and simulation. Blueprints, assemblies, and policy stay in TypeScript; the CLI never defines them.
 
 > [!NOTE]
-> The CLI targets Bun: `veyor.config.ts` is imported directly by the host runtime.
+> The CLI runs under Bun or Node ≥ 23.6: `veyor.config.ts` is imported directly by the host runtime, which needs native TypeScript support (Node strips erasable type syntax natively from 23.6). On older Node, write the config as `veyor.config.js`.
 
 ## The contract
 
