@@ -25,9 +25,9 @@ const selectionSignal = new AbortController().signal;
 export function compile<M extends Machine.Any>(
   machine: M,
   actors: readonly Actor.ImplementationOf<Actor.Any>[],
-  observer?: (event: Machine.RunEvent) => void
+  options?: Machine.RunOptions
 ) {
-  return setup({ actors: compileActors(machine, actors, observer) }).createMachine({
+  return setup({ actors: compileActors(machine, actors, options) }).createMachine({
     id: machine.id,
     initial: machine.initial,
     context: ({ input }): Runtime => ({ user: input, retryCount: 0 }),
@@ -39,11 +39,48 @@ export function compile<M extends Machine.Any>(
   });
 }
 
+interface RecordedOutput {
+  readonly outcome: string;
+  readonly output: Actor.Result;
+}
+
+/**
+ * Walks a recorded run's completions in order: each invocation the record
+ * covers returns its recorded output; past the record, invocations run live.
+ * A mismatch between what the machine selects and what the record holds is
+ * divergence — replaying wrong outputs would corrupt the fold, so it throws.
+ */
+function replayCursor(events: readonly Machine.RunEvent[] | undefined) {
+  const completions = (events ?? []).filter(
+    (event): event is Extract<Machine.RunEvent, { type: "complete" }> => event.type === "complete"
+  );
+  let cursor = 0;
+
+  return {
+    next(task: string, actor: string): RecordedOutput | undefined {
+      const entry = completions[cursor];
+      if (entry === undefined) return undefined;
+      if (entry.task !== task || entry.actor !== actor) {
+        throw new Error(
+          `Replay diverged at "${task} · ${actor}": the record holds "${entry.task} · ${entry.actor}". ` +
+            "The blueprint changed, or the original run escalated across assignments — run without the record."
+        );
+      }
+
+      cursor += 1;
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- the record holds validated outputs
+      return { outcome: entry.outcome, output: entry.output as Actor.Result };
+    },
+  };
+}
+
 function compileActors(
   machine: Machine.Any,
   actors: readonly Actor.ImplementationOf<Actor.Any>[],
-  observer?: (event: Machine.RunEvent) => void
+  options?: Machine.RunOptions
 ) {
+  const observer = options?.observer;
+  const replay = replayCursor(options?.replay);
   const byName = Object.fromEntries(actors.map((actor) => [actor.name, actor]));
   return Object.fromEntries(
     machine.tasks.flatMap((task: Task.Any) =>
@@ -64,15 +101,44 @@ function compileActors(
               observer?.({ type: "retry", task: task.name, attempt: input.meta.retryCount });
             }
 
-            observer?.({ type: "invoke", task: task.name, actor });
+            const recorded = replay.next(task.name, actor);
+            if (recorded !== undefined) {
+              observer?.({
+                type: "invoke",
+                task: task.name,
+                actor,
+                input: input.input,
+                replayed: true,
+              });
+              observer?.({
+                type: "complete",
+                task: task.name,
+                actor,
+                outcome: recorded.outcome,
+                output: recorded.output,
+                durationMs: 0,
+                replayed: true,
+              });
+              return Promise.resolve(recorded.output);
+            }
+
+            observer?.({ type: "invoke", task: task.name, actor, input: input.input });
+            const report = (detail: string, data?: unknown): void => {
+              observer?.(
+                data === undefined
+                  ? { type: "activity", task: task.name, actor, detail }
+                  : { type: "activity", task: task.name, actor, detail, data }
+              );
+            };
             const started = performance.now();
-            return concrete.run({ ...input, signal }).then(
+            return concrete.run({ ...input, signal, report }).then(
               (output: Actor.Result) => {
                 observer?.({
                   type: "complete",
                   task: task.name,
                   actor,
                   outcome: output.outcome,
+                  output,
                   durationMs: performance.now() - started,
                 });
                 return output;

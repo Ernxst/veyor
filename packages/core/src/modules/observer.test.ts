@@ -1,21 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { textObserver } from "./observer.ts";
 
 describe("textObserver", () => {
   it("renders one line per event", () => {
-    const lines: string[] = [];
-    const observe = textObserver((line) => lines.push(line));
+    const write = vi.fn();
+    const observe = textObserver(write);
 
-    observe({ type: "invoke", task: "plan", actor: "planner" });
+    observe({ type: "invoke", task: "plan", actor: "planner", input: {} });
     observe({
       type: "complete",
       task: "plan",
       actor: "planner",
       outcome: "planned",
+      output: { outcome: "planned" },
       durationMs: 1500,
     });
     observe({ type: "transition", from: "plan", to: "select" });
     observe({ type: "retry", task: "plan", attempt: 2 });
+    observe({ type: "activity", task: "plan", actor: "planner", detail: "checking files" });
     observe({
       type: "error",
       task: "plan",
@@ -24,12 +26,12 @@ describe("textObserver", () => {
       durationMs: 20,
     });
 
-    expect(lines).toStrictEqual([
-      "▸ plan · planner",
-      "  ✓ planned (1.5s)",
-      "  → select",
-      "  ↻ retry #2",
-      "  ✗ boom",
-    ]);
+    expect(write).toHaveBeenCalledTimes(6);
+    expect(write).toHaveBeenNthCalledWith(1, "▸ plan · planner");
+    expect(write).toHaveBeenNthCalledWith(2, "  ✓ planned (1.5s)");
+    expect(write).toHaveBeenNthCalledWith(3, "  → select");
+    expect(write).toHaveBeenNthCalledWith(4, "  ↻ retry #2");
+    expect(write).toHaveBeenNthCalledWith(5, "    · checking files");
+    expect(write).toHaveBeenNthCalledWith(6, "  ✗ boom");
   });
 });

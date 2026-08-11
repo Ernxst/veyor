@@ -4,6 +4,7 @@ const render: {
   [T in Machine.RunEvent["type"]]: (event: Extract<Machine.RunEvent, { type: T }>) => string;
 } = {
   invoke: (event) => `▸ ${event.task} · ${event.actor}`,
+  activity: (event) => `    · ${event.detail}`,
   complete: (event) => `  ✓ ${event.outcome} (${(event.durationMs / 1000).toFixed(1)}s)`,
   transition: (event) => `  → ${event.to}`,
   retry: (event) => `  ↻ retry #${event.attempt}`,

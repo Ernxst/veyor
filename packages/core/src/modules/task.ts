@@ -51,6 +51,12 @@ export declare namespace Task {
     readonly context: Context;
     readonly input: Input;
     readonly signal: AbortSignal;
+    /**
+     * Narrates progress from inside the invocation — tool runs, edits,
+     * thinking — to the run's observer as `activity` events. Optional:
+     * deterministic workers stay silent; agentic adapters should report.
+     */
+    readonly report?: (detail: string, data?: unknown) => void;
   }
 }
 

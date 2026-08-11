@@ -75,16 +75,45 @@ export declare namespace Machine {
   export interface RunOptions {
     /** Receives progress events as the machine runs; the first slice of run history. */
     readonly observer?: (event: RunEvent) => void;
+    /**
+     * Events recorded from an earlier run of the same machine over the same
+     * initial context. Invocations covered by the record return their
+     * recorded outputs instead of running workers (re-emitted to the
+     * observer with `replayed: true`); the first invocation past the record
+     * runs live. A record that names a different actor than the machine
+     * selects — a changed blueprint, or an original run whose retries
+     * escalated across assignments — fails the run rather than replaying
+     * wrong outputs.
+     */
+    readonly replay?: readonly RunEvent[];
   }
 
   export type RunEvent =
-    | { readonly type: "invoke"; readonly task: string; readonly actor: string }
+    | {
+        readonly type: "invoke";
+        readonly task: string;
+        readonly actor: string;
+        /** The invocation input derived from context by the assignment. */
+        readonly input: unknown;
+        readonly replayed?: true;
+      }
+    | {
+        /** Worker-reported progress from inside a running invocation. */
+        readonly type: "activity";
+        readonly task: string;
+        readonly actor: string;
+        readonly detail: string;
+        readonly data?: unknown;
+      }
     | {
         readonly type: "complete";
         readonly task: string;
         readonly actor: string;
         readonly outcome: string;
+        /** The validated output the machine folded into context. */
+        readonly output: unknown;
         readonly durationMs: number;
+        readonly replayed?: true;
       }
     | {
         readonly type: "error";

@@ -36,7 +36,7 @@ export function assemble<M extends Machine.Any, const Actors extends Actor.Assem
     def: machine,
     // @effect-diagnostics-next-line asyncFunction:off
     async run(context, options) {
-      const fsm = compile(machine, actors, options?.observer);
+      const fsm = compile(machine, actors, options);
       const input = await validate(machine.contract.Context, context, "context", machine.id);
 
       const running = createActor(fsm, { input });
