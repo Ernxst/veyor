@@ -10,6 +10,7 @@
     "software-factory",
     "standard-schema",
     "state-machine",
+    "tanstack-intent",
     "veyor",
     "workflow",
     "xstate"
@@ -31,6 +32,7 @@
   "files": [
     "dist",
     "src",
+    "skills",
     "!src/**/*.test.ts",
     "!src/**/*.test-d.ts"
   ],

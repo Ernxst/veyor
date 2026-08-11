@@ -10,6 +10,7 @@
     "simulation",
     "software-factory",
     "state-machine",
+    "tanstack-intent",
     "veyor",
     "workflow"
   ],
@@ -33,6 +34,7 @@
   "files": [
     "dist",
     "src",
+    "skills",
     "!src/**/*.test.ts",
     "!src/**/*.test-d.ts"
   ],
