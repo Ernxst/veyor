@@ -66,7 +66,13 @@ jobs:
               echo "$name@${{ steps.bump.outputs.version }} already published; skipping"
               continue
             fi
-            (cd "packages/$pkg" && npm publish --access public)
+            (cd "packages/$pkg" && npm publish --access public) || {
+              # Freshly published versions can lag npm view; the E403
+              # "cannot publish over" answers the same question.
+              npm view "$name@${{ steps.bump.outputs.version }}" version >/dev/null 2>&1 \
+                && echo "$name@${{ steps.bump.outputs.version }} raced propagation; already published" \
+                || exit 1
+            }
           done
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
