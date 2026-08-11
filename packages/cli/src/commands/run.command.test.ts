@@ -1,6 +1,15 @@
 import { NodeServices } from "@effect/platform-node";
 import { describe, expect, it } from "@effect/vitest";
-import { actor, assemble, assign, machine, sink, task, transition } from "@veyorhq/core";
+import {
+  actor,
+  assemble,
+  assign,
+  machine,
+  sink,
+  task,
+  transition,
+  type Machine,
+} from "@veyorhq/core";
 import { deterministic } from "@veyorhq/core/actors";
 import { schema } from "@veyorhq/core/schema/effect";
 import { Effect, Layer } from "effect";
@@ -41,6 +50,30 @@ const factory = assemble(
   Blueprint,
   deterministic(Worker, () => ({ outcome: "shipped" as const }))
 );
+
+const RoutedWorker = actor("routed-worker", {
+  context: Context,
+  input: Empty,
+  output: schema(Schema.Struct({ outcome: Schema.Literals(["approved", "rejected"]) })),
+  aggregate: Empty,
+});
+
+const RoutedBlueprint = machine({
+  id: "routed-factory",
+  initial: "work",
+  context: Context,
+  tasks: [task("work", assign(RoutedWorker)), sink("approved"), sink("rejected")],
+  transitions: [
+    transition("work", "approved", { on: "approved" }),
+    transition("work", "rejected", { on: "rejected" }),
+  ],
+});
+
+const routed = (outcome: "approved" | "rejected") =>
+  assemble(
+    RoutedBlueprint,
+    deterministic(RoutedWorker, () => ({ outcome }))
+  );
 
 const config = defineConfig({
   assemblies: { test: factory },
@@ -83,12 +116,19 @@ describe("veyor run", () => {
     })
   );
 
-  it.effect("maps schema issues back to the command line", () =>
+  it.effect("uses the explicit assembly over the configured default", () =>
     Effect.gen(function* () {
-      const { err } = yield* exec(Command.runWith(makeRun(config), version)([]));
-      process.exitCode = 0;
+      const selectionConfig = defineConfig({
+        assemblies: { approved: routed("approved"), rejected: routed("rejected") },
+        args: [{ key: "input.task", position: 0 }],
+        run: { assembly: "approved" },
+      });
 
-      expect(err.join("\n")).toContain("<task>");
+      const { out } = yield* exec(
+        Command.runWith(makeRun(selectionConfig), version)(["ship it", "--assembly", "rejected"])
+      );
+
+      expect(parsed(out)).toMatchObject({ task: "rejected" });
     })
   );
 });
@@ -105,6 +145,50 @@ describe("veyor simulate", () => {
         runs: 3,
         sinks: { done: { count: 3, share: 1 } },
         failures: {},
+        context: {
+          budget: { mean: 1, min: 1, max: 1 },
+          attempts: { mean: 0, min: 0, max: 0 },
+        },
+      });
+    })
+  );
+
+  it.effect("keeps successful sinks and failed runs separate across seeded simulations", () =>
+    Effect.gen(function* () {
+      const seeded = (seed: number): Machine.Impl<typeof RoutedBlueprint> => {
+        const impl = routed(seed % 2 === 0 ? "approved" : "rejected");
+        return {
+          ...impl,
+          run: (context, options) =>
+            seed === 12
+              ? Promise.reject(new Error("simulated outage"))
+              : impl.run(context, options),
+        };
+      };
+      const simulationConfig = defineConfig({
+        assemblies: { simulated: seeded },
+        args: [{ key: "input.task", position: 0 }],
+      });
+
+      const { out } = yield* exec(
+        Command.runWith(
+          makeSimulate(simulationConfig),
+          version
+        )(["ship it", "--runs", "4", "--seed", "10"])
+      );
+
+      expect(parsed(out)).toStrictEqual({
+        assembly: "simulated",
+        runs: 4,
+        sinks: {
+          approved: { count: 1, share: 0.25 },
+          rejected: { count: 2, share: 0.5 },
+        },
+        failures: { "simulated outage": 1 },
+        context: {
+          budget: { mean: 1, min: 1, max: 1 },
+          attempts: { mean: 0, min: 0, max: 0 },
+        },
       });
     })
   );

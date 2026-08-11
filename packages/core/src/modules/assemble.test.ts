@@ -6,7 +6,7 @@ import { schema } from "../lib/schema/effect.ts";
 import { actor } from "./actor.ts";
 import { assemble } from "./assemble.ts";
 import { assign } from "./assignment.ts";
-import { machine, type Machine } from "./machine.ts";
+import { machine } from "./machine.ts";
 import { sink, task } from "./task.ts";
 import { transition } from "./transition.ts";
 
@@ -95,10 +95,8 @@ describe("assemble().run", () => {
       transitions: [transition("work", "done", { on: "completed" })],
     });
 
-    const junior = vi.fn(() => {
-      throw new Error("junior gave up");
-    });
-    const senior = vi.fn(() => ({ outcome: "completed" as const }));
+    const junior = vi.fn().mockRejectedValueOnce(new Error("junior gave up"));
+    const senior = vi.fn().mockReturnValueOnce({ outcome: "completed" as const });
 
     const result = await assemble(
       Blueprint,
@@ -106,9 +104,136 @@ describe("assemble().run", () => {
       deterministic(Senior, senior)
     ).run({});
 
-    expect(junior).toHaveBeenCalledTimes(1);
-    expect(senior).toHaveBeenCalledTimes(1);
+    expect(junior).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 0 } })
+    );
+    expect(senior).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 1 } })
+    );
     expect(result.task).toBe("done");
+  });
+
+  it("retries with the original context and freshly derived input", async () => {
+    const Context = schema(Schema.Struct({ objective: Schema.String }));
+    const Worker = actor("worker", {
+      context: Context,
+      input: schema(Schema.Struct({ objective: Schema.String })),
+      output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
+      aggregate: Empty,
+    });
+
+    const Blueprint = machine({
+      id: "retry-context",
+      initial: "work",
+      context: Context,
+      retries: 1,
+      tasks: [
+        task(
+          "work",
+          assign(Worker, {
+            input: (context) => ({ objective: context.objective }),
+          })
+        ),
+        sink("done"),
+      ],
+      transitions: [transition("work", "done", { on: "completed" })],
+    });
+
+    const worker = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("try again"))
+      .mockReturnValueOnce({ outcome: "completed" as const });
+
+    await expect(
+      assemble(Blueprint, deterministic(Worker, worker)).run({ objective: "ship" })
+    ).resolves.toMatchObject({ task: "done", context: { objective: "ship" } });
+
+    expect(worker).toHaveBeenCalledTimes(2);
+    expect(worker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        context: { objective: "ship" },
+        input: { objective: "ship" },
+        meta: { retryCount: 0 },
+      })
+    );
+    expect(worker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        context: { objective: "ship" },
+        input: { objective: "ship" },
+        meta: { retryCount: 1 },
+      })
+    );
+  });
+
+  it("observes a failed attempt before its retry and successful completion", async () => {
+    const Context = schema(Schema.Struct({}));
+    const Worker = actor("worker", {
+      context: Context,
+      input: Empty,
+      output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
+      aggregate: Empty,
+    });
+
+    const Blueprint = machine({
+      id: "observed-retry",
+      initial: "work",
+      context: Context,
+      retries: 1,
+      tasks: [task("work", assign(Worker)), sink("done")],
+      transitions: [transition("work", "done", { on: "completed" })],
+    });
+
+    const worker = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("temporary failure"))
+      .mockReturnValueOnce({ outcome: "completed" as const });
+    const observer = vi.fn();
+
+    await assemble(Blueprint, deterministic(Worker, worker)).run({}, { observer });
+
+    expect(worker).toHaveBeenCalledTimes(2);
+    expect(worker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 0 } })
+    );
+    expect(worker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 1 } })
+    );
+    expect(observer).toHaveBeenCalledTimes(6);
+    expect(observer).toHaveBeenNthCalledWith(1, { type: "invoke", task: "work", actor: "worker" });
+    expect(observer).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: "error",
+        task: "work",
+        actor: "worker",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- vitest asymmetric matcher
+        error: expect.any(Error),
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- vitest asymmetric matcher
+        durationMs: expect.any(Number),
+      })
+    );
+    expect(observer).toHaveBeenNthCalledWith(3, { type: "retry", task: "work", attempt: 1 });
+    expect(observer).toHaveBeenNthCalledWith(4, { type: "invoke", task: "work", actor: "worker" });
+    expect(observer).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        type: "complete",
+        task: "work",
+        actor: "worker",
+        outcome: "completed",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- vitest asymmetric matcher
+        durationMs: expect.any(Number),
+      })
+    );
+    expect(observer).toHaveBeenNthCalledWith(6, {
+      type: "transition",
+      from: "work",
+      to: "done",
+    });
   });
 
   it("rejects with the actor error once retries are exhausted", async () => {
@@ -129,14 +254,20 @@ describe("assemble().run", () => {
       transitions: [transition("work", "done", { on: "completed" })],
     });
 
-    const worker = vi.fn(() => {
-      throw new Error("always broken");
-    });
+    const worker = vi.fn().mockRejectedValue(new Error("always broken"));
 
     await expect(assemble(Blueprint, deterministic(Worker, worker)).run({})).rejects.toThrow(
       "always broken"
     );
     expect(worker).toHaveBeenCalledTimes(2);
+    expect(worker).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 0 } })
+    );
+    expect(worker).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 1 } })
+    );
   });
 
   it("routes by declaration order through guards that see the updated context", async () => {
@@ -201,15 +332,31 @@ describe("assemble().run", () => {
       transitions: [transition("work", "done", { on: "completed" })],
     });
 
-    const events: Machine.RunEvent[] = [];
-    await assemble(
-      Blueprint,
-      deterministic(Worker, () => ({ outcome: "completed" as const }))
-    ).run({}, { observer: (event) => events.push(event) });
+    const worker = vi.fn().mockReturnValueOnce({ outcome: "completed" as const });
+    const observer = vi.fn();
+    await assemble(Blueprint, deterministic(Worker, worker)).run({}, { observer });
 
-    expect(events.map((event) => event.type)).toStrictEqual(["invoke", "complete", "transition"]);
-    expect(events[1]).toMatchObject({ task: "work", actor: "worker", outcome: "completed" });
-    expect(events[2]).toMatchObject({ from: "work", to: "done" });
+    expect(worker).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ context: {}, input: undefined, meta: { retryCount: 0 } })
+    );
+    expect(observer).toHaveBeenCalledTimes(3);
+    expect(observer).toHaveBeenNthCalledWith(1, { type: "invoke", task: "work", actor: "worker" });
+    expect(observer).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: "complete",
+        task: "work",
+        actor: "worker",
+        outcome: "completed",
+        // oxlint-disable-next-line typescript/no-unsafe-assignment -- vitest asymmetric matcher
+        durationMs: expect.any(Number),
+      })
+    );
+    expect(observer).toHaveBeenNthCalledWith(3, {
+      type: "transition",
+      from: "work",
+      to: "done",
+    });
   });
 
   it("rejects when every matching transition's guard refuses", async () => {

@@ -48,8 +48,8 @@ const Blueprint = machine({
 
 describe("XState compiler", () => {
   it("selects with machine context, routes by outcome, and completes at a sink", () => {
-    const first = vi.fn(() => ({ outcome: "first" as const }));
-    const second = vi.fn(() => ({ outcome: "second" as const }));
+    const first = vi.fn().mockReturnValueOnce({ outcome: "first" as const });
+    const second = vi.fn().mockReturnValueOnce({ outcome: "second" as const });
     const compiled = compile(Blueprint, [
       deterministic(First, first),
       deterministic(Second, second),
@@ -58,9 +58,45 @@ describe("XState compiler", () => {
 
     running.start();
     return toPromise(running).then(() => {
-      expect(first).not.toHaveBeenCalled();
-      expect(second).toHaveBeenCalledTimes(1);
+      expect(first).toHaveBeenCalledTimes(0);
+      expect(second).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          context: { selected: "second" },
+          input: undefined,
+          meta: { retryCount: 0 },
+        })
+      );
       expect(running.getSnapshot()).toMatchObject({ status: "done", value: "second-done" });
     });
+  });
+
+  it("fails instead of invoking an actor when no assignment is enabled", () => {
+    const Worker = actor("worker", {
+      context: Empty,
+      input: Empty,
+      output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
+      aggregate: Empty,
+    });
+    const noEligibleWorker = machine({
+      id: "no-enabled-assignment",
+      initial: "work",
+      context: Empty,
+      tasks: [
+        task(
+          "work",
+          assign(Worker, () => false),
+          assign(Worker, () => false)
+        ),
+        sink("done"),
+      ],
+      transitions: [transition("work", "done", { on: "completed" })],
+    });
+    const run = vi.fn();
+    const compiled = compile(noEligibleWorker, [deterministic(Worker, run)]);
+
+    expect(() => compiled.getInitialSnapshot(undefined, {})).toThrow(
+      'Task "work" has no enabled assignment for this context.'
+    );
+    expect(run).toHaveBeenCalledTimes(0);
   });
 });
