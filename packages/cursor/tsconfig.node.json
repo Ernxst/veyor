@@ -1,0 +1,7 @@
+{
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/node"],
+  "compilerOptions": {
+    "composite": true
+  },
+  "include": ["test", "vitest.config.ts"]
+}

@@ -1,0 +1,93 @@
+{
+  "name": "@veyorhq/cursor",
+  "version": "0.1.1",
+  "description": "Cursor Agent CLI workers for Veyor actors.",
+  "keywords": [
+    "agents",
+    "ai",
+    "cursor",
+    "cursor-agent",
+    "llm",
+    "software-factory",
+    "state-machine",
+    "tanstack-intent",
+    "veyor",
+    "workflow"
+  ],
+  "homepage": "https://github.com/Ernxst/veyor",
+  "bugs": {
+    "url": "https://github.com/Ernxst/veyor/issues"
+  },
+  "author": {
+    "name": "Ernest Badu",
+    "email": "55922827+Ernxst@users.noreply.github.com",
+    "url": "https://github.com/Ernxst"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ernxst/veyor.git",
+    "directory": "packages/cursor"
+  },
+  "files": [
+    "dist",
+    "src",
+    "skills",
+    "!src/**/*.test.ts",
+    "!src/**/*.test-d.ts"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/cursor.js",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "-------------------------------------------------------------------------------": "",
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "typecheck": "tsc -b --noEmit",
+    "--------------------------------------------------------------------------------": "",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "---------------------------------------------------------------------------------": "",
+    "intent:validate": "intent validate skills"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-beta.103",
+    "@standard-schema/spec": "1.1.0",
+    "@veyorhq/core": "workspace:*",
+    "effect": "4.0.0-beta.103"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/core": "0.18.5",
+    "@effect/vitest": "4.0.0-beta.103",
+    "@tanstack/intent": "0.3.6",
+    "@veyorhq/tsconfig": "workspace:*",
+    "publint": "0.3.22",
+    "tsdown": "0.22.14",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  },
+  "peerDependencies": {
+    "@effect/platform-node": "4.0.0-beta.103",
+    "@veyorhq/core": "^0.0.0",
+    "effect": "4.0.0-beta.103"
+  },
+  "peerDependenciesMeta": {
+    "@veyorhq/core": {
+      "optional": false
+    },
+    "@effect/platform-node": {
+      "optional": true
+    },
+    "effect": {
+      "optional": false
+    }
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}

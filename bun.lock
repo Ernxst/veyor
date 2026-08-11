@@ -152,6 +152,34 @@
         "vitest": "4.1.10",
       },
     },
+    "packages/cursor": {
+      "name": "@veyorhq/cursor",
+      "version": "0.1.1",
+      "dependencies": {
+        "@effect/platform-node": "4.0.0-beta.103",
+        "@standard-schema/spec": "1.1.0",
+        "@veyorhq/core": "workspace:*",
+        "effect": "4.0.0-beta.103",
+      },
+      "devDependencies": {
+        "@arethetypeswrong/core": "0.18.5",
+        "@effect/vitest": "4.0.0-beta.103",
+        "@tanstack/intent": "0.3.6",
+        "@veyorhq/tsconfig": "workspace:*",
+        "publint": "0.3.22",
+        "tsdown": "0.22.14",
+        "typescript": "7.0.2",
+        "vitest": "4.1.10",
+      },
+      "peerDependencies": {
+        "@effect/platform-node": "4.0.0-beta.103",
+        "@veyorhq/core": "^0.0.0",
+        "effect": "4.0.0-beta.103",
+      },
+      "optionalPeers": [
+        "@effect/platform-node",
+      ],
+    },
     "packages/openai": {
       "name": "@veyorhq/openai",
       "version": "0.1.1",
@@ -724,6 +752,8 @@
     "@veyorhq/cli": ["@veyorhq/cli@workspace:packages/cli"],
 
     "@veyorhq/core": ["@veyorhq/core@workspace:packages/core"],
+
+    "@veyorhq/cursor": ["@veyorhq/cursor@workspace:packages/cursor"],
 
     "@veyorhq/openai": ["@veyorhq/openai@workspace:packages/openai"],
 

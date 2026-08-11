@@ -1,0 +1,3 @@
+{
+  "extends": ["@veyorhq/tsconfig", "@veyorhq/tsconfig/effect", "@veyorhq/tsconfig/node"]
+}

@@ -118,6 +118,7 @@ For the full design, see the [software factory example](./examples/software-fact
 | [`@veyorhq/anthropic`](./packages/anthropic) | Anthropic API and Claude Code CLI implementations for Veyor actors.           |
 | [`@veyorhq/openai`](./packages/openai)       | OpenAI API and Codex CLI implementations for Veyor actors.                    |
 | [`@veyorhq/opencode`](./packages/opencode)   | opencode CLI implementations for Veyor actors, including its free model tier. |
+| [`@veyorhq/cursor`](./packages/cursor)       | Cursor Agent CLI implementations for Veyor actors.                            |
 
 [`@veyorhq/cli`](./packages/cli) hosts factories at the command line: `veyor run`, `veyor simulate`, and `veyor inspect` over a project's `veyor.config.ts`.
 
