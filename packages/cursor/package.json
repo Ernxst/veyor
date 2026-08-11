@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/cursor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Cursor Agent CLI workers for Veyor actors.",
   "keywords": [
     "agents",

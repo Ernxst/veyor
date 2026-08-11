@@ -1,6 +1,6 @@
 {
   "name": "@veyorhq/opencode",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "opencode CLI workers for Veyor actors, including its free model tier.",
   "keywords": [
     "agents",
