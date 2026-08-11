@@ -51,7 +51,7 @@ src/
     probabilistic.ts   # the seeded simulation assembly
 ```
 
-Each file imports only from the files above it; if an import points the other way, something is in the wrong place. Pure domain helpers live beside the blueprint (`src/backlog.ts` in the example). Growth is by splitting in place, not by new top-level concepts: a large `schema.ts` becomes `src/schema/` with one file per station, a large `actors.ts` splits the same way — the spine does not change.
+Each file imports only from the files above it; if an import points the other way, something is in the wrong place. `schema.ts` is the whole model — contracts _and_ the pure operations over them (the example's backlog queries live there, not in a helpers file). Growth is by splitting in place, not by new top-level concepts: a large `schema.ts` becomes `src/schema/` with one file per station, a large `actors.ts` splits the same way — the spine does not change.
 
 In a **monorepo**, the factory is a workspace package — conventionally `factory/` at the repo root, with exactly the shape above inside it and the `@forge/*` and worker-adapter dependencies in its own `package.json`. `forge` reads `forge.config.ts` from the working directory, so runs happen in that package; give the root a forwarding script if you want to drive it from anywhere:
 

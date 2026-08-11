@@ -1,6 +1,5 @@
 import { assign, machine, sink, task, transition } from "@forge/core";
 import * as actors from "./actors.ts";
-import { gateTier, readyItems } from "./backlog.ts";
 import * as Schema from "./schema.ts";
 
 /** How many refine cycles an item gets before its base is presumed wrong. */
@@ -149,12 +148,12 @@ export const DeliveryBlueprint = machine({
     task(
       "review",
       assign(actors.GateReviewer, {
-        when: ({ context }) => gateTier(currentItem(context)),
+        when: ({ context }) => Schema.gateTier(currentItem(context)),
         ...reviewHooks({ metered: false }),
       }),
       assign(actors.Reviewer, {
         when: ({ context }) =>
-          !gateTier(currentItem(context)) &&
+          !Schema.gateTier(currentItem(context)) &&
           currentItem(context).risk !== "high" &&
           !context.reworked,
         ...reviewHooks({ metered: true }),
@@ -213,12 +212,12 @@ export const DeliveryBlueprint = machine({
     task(
       "verify",
       assign(actors.GateVerifier, {
-        when: ({ context }) => context.backlog.every(gateTier),
+        when: ({ context }) => context.backlog.every(Schema.gateTier),
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
         update: ({ context }) => ({ ...context, unverifiedRisk: 0 }),
       }),
       assign(actors.Verifier, {
-        when: ({ context }) => !context.backlog.every(gateTier),
+        when: ({ context }) => !context.backlog.every(Schema.gateTier),
         input: (context) => ({ prompt: context.input.prompt, backlog: context.backlog }),
         update: ({ context, output }) =>
           output.outcome === "blocked"
@@ -307,11 +306,11 @@ export const DeliveryBlueprint = machine({
     task(
       "accept",
       assign(actors.AutoAcceptance, {
-        when: ({ context }) => context.backlog.every(gateTier),
+        when: ({ context }) => context.backlog.every(Schema.gateTier),
         input: acceptanceInput,
       }),
       assign(actors.Acceptance, {
-        when: ({ context }) => !context.backlog.every(gateTier),
+        when: ({ context }) => !context.backlog.every(Schema.gateTier),
         input: acceptanceInput,
       })
     ),
@@ -372,7 +371,8 @@ export const DeliveryBlueprint = machine({
     transition("integrate", "verify", {
       on: "integrated",
       when: (context: Schema.Context) =>
-        context.unverifiedRisk >= VERIFY_RISK_BUDGET && readyItems(context.backlog).length > 0,
+        context.unverifiedRisk >= VERIFY_RISK_BUDGET &&
+        Schema.readyItems(context.backlog).length > 0,
     }),
     transition("integrate", "select", { on: "integrated" }),
 
@@ -380,7 +380,7 @@ export const DeliveryBlueprint = machine({
     // acceptance. Deferred-blocked items count as done-with-remainder, not work.
     transition("verify", "select", {
       on: "passed",
-      when: (context: Schema.Context) => readyItems(context.backlog).length > 0,
+      when: (context: Schema.Context) => Schema.readyItems(context.backlog).length > 0,
     }),
     transition("verify", "accept", { on: "passed" }),
     transition("verify", "triage", { on: "failed" }),

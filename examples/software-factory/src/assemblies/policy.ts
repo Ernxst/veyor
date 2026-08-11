@@ -1,6 +1,6 @@
 import { deterministic } from "@forge/core/actors";
 import * as actors from "../actors.ts";
-import { readyItems, unreachableItems } from "../backlog.ts";
+import { readyItems, unreachableItems } from "../schema.ts";
 
 /**
  * Selection is scheduling, not judgment: the first pending item whose
