@@ -4,6 +4,7 @@ import { NodeRuntime, NodeServices } from "@effect/platform-node";
 import { Effect, Stdio } from "effect";
 import { Command } from "effect/unstable/cli";
 import packageJson from "../package.json" with { type: "json" };
+import { makeInit } from "./commands/init.ts";
 import { makeInspect } from "./commands/inspect.ts";
 import { makeRun } from "./commands/run.ts";
 import { makeSimulate } from "./commands/simulate.ts";
@@ -15,8 +16,10 @@ function buildCli(config: VeyorConfig | undefined) {
     return Command.make("veyor").pipe(
       Command.withDescription(
         "Run typed workflow factories. No veyor.config.ts found in this directory — " +
-          "create one with defineConfig({ assemblies, args }) from @veyorhq/cli."
-      )
+          "run `veyor init` to scaffold one, or create one yourself with " +
+          "defineConfig({ assemblies, args }) from @veyorhq/cli."
+      ),
+      Command.withSubcommands([makeInit()])
     );
   }
 
@@ -25,7 +28,12 @@ function buildCli(config: VeyorConfig | undefined) {
       [config.name, config.description].filter((part) => part !== undefined).join(" — ") ||
         "Run typed workflow factories."
     ),
-    Command.withSubcommands([makeRun(config), makeSimulate(config), makeInspect(config)])
+    Command.withSubcommands([
+      makeRun(config),
+      makeSimulate(config),
+      makeInspect(config),
+      makeInit(),
+    ])
   );
 }
 
