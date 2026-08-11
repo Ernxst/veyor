@@ -29,6 +29,13 @@ established.
 - `cursor-agent status`/`whoami` reports `Not logged in`; `cursor-agent
 about` reports the CLI version and confirms no account is attached.
 
+## Live-verified 2026-08-12 (authenticated, adapter end-to-end)
+
+A real `cursor.preset({ model: "auto" })` invocation returned a schema-valid
+output: `assistant` text events narrated, the terminal `result` event parsed
+as documented, and contract validation passed. Still unexercised: `tool_call`
+event shapes (the probe needed no tools) — treat those as docs-derived below.
+
 ## Docs-derived, not live-verified
 
 Everything about the shape of a _successful_ run — because no successful
