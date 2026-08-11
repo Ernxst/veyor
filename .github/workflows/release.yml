@@ -47,7 +47,8 @@ jobs:
           git diff --quiet || git commit -am "chore: release v${{ steps.bump.outputs.version }}"
           git rev-parse -q --verify "refs/tags/v${{ steps.bump.outputs.version }}" >/dev/null \
             || git tag "v${{ steps.bump.outputs.version }}"
-          git push --follow-tags
+          # --follow-tags skips lightweight tags; push the tag explicitly.
+          git push origin main "v${{ steps.bump.outputs.version }}"
 
       # npm does not understand workspace:*, so a publish-time rewrite
       # (never committed) pins workspace deps to the released versions.
@@ -60,6 +61,11 @@ jobs:
           node -e 'const fs=require("fs");const j=JSON.parse(fs.readFileSync("package.json","utf8"));delete j.devEngines;fs.writeFileSync("package.json",JSON.stringify(j,null,2))'
           echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "$HOME/.npmrc"
           for pkg in core cli ai-effect anthropic openai opencode; do
+            name=$(node -p "require('./packages/$pkg/package.json').name")
+            if npm view "$name@${{ steps.bump.outputs.version }}" version >/dev/null 2>&1; then
+              echo "$name@${{ steps.bump.outputs.version }} already published; skipping"
+              continue
+            fi
             (cd "packages/$pkg" && npm publish --access public)
           done
         env:
