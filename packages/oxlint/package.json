@@ -1,7 +1,6 @@
 {
   "name": "@forge/oxlint",
   "version": "0.0.0",
-  "private": true,
   "files": [
     "src"
   ],
