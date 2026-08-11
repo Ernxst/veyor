@@ -43,7 +43,6 @@ import * as Schema from "effect/Schema";
 const Writer = actor("writer", {
   input: schema(Schema.Struct({ objective: Schema.String })),
   output: schema(Schema.Struct({ plan: Schema.String })),
-  aggregate: schema(Schema.Struct({})),
 });
 ```
 

@@ -32,7 +32,6 @@ export function probabilistic<A extends Actor.Any>(
 
   return {
     ...actor,
-    aggregate: () => Promise.resolve(),
     // @effect-diagnostics-next-line asyncFunction:off
     async run(task) {
       maybeFail(getFailureRate(options), rand, actor.name);

@@ -18,7 +18,6 @@ export function prompt<A extends Actor.Any>(
 ): Actor.ImplementationOf<A> {
   return {
     ...actor,
-    aggregate: () => Promise.resolve(),
     run(task) {
       const rl = createInterface({ input: stdin, output: stdout });
       return rl

@@ -9,14 +9,12 @@ const Worker = actor("worker", {
   context: Empty,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literals(["completed", "changesRequested"]) })),
-  aggregate: Empty,
 });
 
 const Reviewer = actor("reviewer", {
   context: Empty,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literals(["approved", "rejected"]) })),
-  aggregate: Empty,
 });
 
 const tasks = [

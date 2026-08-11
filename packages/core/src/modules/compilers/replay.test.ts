@@ -17,14 +17,12 @@ const Planner = actor("planner", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("planned"), plan: Schema.String })),
-  aggregate: Empty,
 });
 
 const Builder = actor("builder", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("built"), artifact: Schema.String })),
-  aggregate: Empty,
 });
 
 const Blueprint = machine({

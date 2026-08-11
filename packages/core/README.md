@@ -34,7 +34,6 @@ const Planner = actor("planner", {
   context: Context,
   input: Empty,
   output: PlanOutput,
-  aggregate: Empty,
 });
 
 const Blueprint = machine({

@@ -129,25 +129,6 @@ export declare namespace Machine {
     readonly task: Sink;
     readonly context: Context;
   }
-
-  export interface History {
-    readonly task: Task.Any;
-    readonly actor: Actor;
-    readonly input: unknown;
-    readonly output?: unknown;
-    readonly outcome: Task.Status;
-    readonly startedAt: number;
-    readonly finishedAt?: number;
-    readonly attempt: number;
-  }
-
-  export interface State {
-    readonly id: string;
-    readonly status: Task.Status;
-    readonly currentTask: string;
-    readonly context: unknown;
-    readonly history: readonly History[];
-  }
 }
 
 export function machine<

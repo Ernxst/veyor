@@ -34,7 +34,7 @@ The result is a factory-first library: the durable artifact is the workflow and 
 
 | Concept      | Purpose                                                                                             |
 | ------------ | --------------------------------------------------------------------------------------------------- |
-| `actor`      | Names a capability and defines its context, input, output, and aggregate contracts.                 |
+| `actor`      | Names a capability and defines its context, input, and output contracts.                            |
 | `task`       | Assigns one or more actors to a step in the workflow.                                               |
 | `assign`     | Attaches an actor to a task, optionally behind a routing condition.                                 |
 | `transition` | Defines the allowed path between tasks.                                                             |
@@ -83,7 +83,6 @@ const Planner = actor("planner", {
   context: Context,
   input: Empty,
   output: PlanOutput,
-  aggregate: Empty,
 });
 
 const Blueprint = machine({

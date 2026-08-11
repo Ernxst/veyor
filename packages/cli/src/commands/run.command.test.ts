@@ -35,7 +35,6 @@ const Worker = actor("worker", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("shipped") })),
-  aggregate: Empty,
 });
 
 const Blueprint = machine({
@@ -55,7 +54,6 @@ const RoutedWorker = actor("routed-worker", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literals(["approved", "rejected"]) })),
-  aggregate: Empty,
 });
 
 const RoutedBlueprint = machine({

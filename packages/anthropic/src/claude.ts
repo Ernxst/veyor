@@ -298,7 +298,6 @@ export function claude<A extends Actor.Any>(
 
   return {
     ...actor,
-    aggregate: (_state) => Promise.resolve({} as unknown as Actor.AggregateOf<A>),
     run(task) {
       const program = Effect.gen(function* () {
         const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;

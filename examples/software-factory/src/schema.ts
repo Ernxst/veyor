@@ -123,8 +123,6 @@ export type ReviewOutput = Schema.Schema.Type<typeof ReviewOutput>;
 export type AcceptanceRequest = Schema.Schema.Type<typeof AcceptanceRequest>;
 export type AcceptanceOutput = Schema.Schema.Type<typeof AcceptanceOutput>;
 
-export const TaskAggregate = Schema.Struct({ attempts: Schema.Finite });
-
 // --- Task contracts ----------------------------------------------------------
 
 /**

@@ -36,9 +36,5 @@ export function agent<A extends Actor.Any>(
         ),
         { signal }
       ),
-
-    aggregate: () => {
-      throw new Error("Not implemented");
-    },
   };
 }

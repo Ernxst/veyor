@@ -5,19 +5,16 @@ import { actor, assemble, assign, machine, task } from "../index.ts";
 import { schema } from "../lib/schema/effect.ts";
 
 const Context = schema(Schema.Struct({}));
-const Aggregate = schema(Schema.Struct({ count: Schema.Finite }));
 
 const First = actor("first", {
   input: schema(Schema.Struct({})),
   output: schema(Schema.Struct({ first: Schema.String, outcome: Schema.String })),
-  aggregate: Aggregate,
   context: Context,
 });
 
 const Second = actor("second", {
   input: schema(Schema.Struct({})),
   output: schema(Schema.Struct({ second: Schema.String, outcome: Schema.String })),
-  aggregate: Aggregate,
   context: Context,
 });
 

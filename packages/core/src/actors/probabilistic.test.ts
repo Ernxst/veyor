@@ -17,7 +17,6 @@ const Review = actor("review", {
       Schema.Struct({ outcome: Schema.Literal("changesRequested"), reason: Schema.String }),
     ])
   ),
-  aggregate: Empty,
 });
 
 function taskInput(strict: boolean): Task.Input<{ strict: boolean }, object> {

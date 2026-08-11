@@ -17,14 +17,12 @@ const First = actor("first", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("first") })),
-  aggregate: Empty,
 });
 
 const Second = actor("second", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("second") })),
-  aggregate: Empty,
 });
 
 const Blueprint = machine({
@@ -75,7 +73,6 @@ describe("XState compiler", () => {
       context: Empty,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
     const noEligibleWorker = machine({
       id: "no-enabled-assignment",

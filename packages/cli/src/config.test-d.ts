@@ -18,7 +18,6 @@ const Worker = actor("worker", {
   context: Context,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literal("shipped") })),
-  aggregate: Empty,
 });
 
 const Blueprint = machine({

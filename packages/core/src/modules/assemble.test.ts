@@ -22,7 +22,6 @@ describe("assemble().run", () => {
       context: Context,
       input: schema(Schema.Struct({ objective: Schema.String })),
       output: schema(Schema.Struct({ outcome: Schema.Literal("planned"), summary: Schema.String })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -70,13 +69,11 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: Output,
-      aggregate: Empty,
     });
     const Senior = actor("senior", {
       context: Context,
       input: Empty,
       output: Output,
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -119,7 +116,6 @@ describe("assemble().run", () => {
       context: Context,
       input: schema(Schema.Struct({ objective: Schema.String })),
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -173,7 +169,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -242,7 +237,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -278,7 +272,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: Output,
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -321,7 +314,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -365,7 +357,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -393,7 +384,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literals(["completed", "skipped"]) })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({
@@ -421,7 +411,6 @@ describe("assemble().run", () => {
       context: Context,
       input: Empty,
       output: schema(Schema.Struct({ outcome: Schema.Literal("completed") })),
-      aggregate: Empty,
     });
 
     const Blueprint = machine({

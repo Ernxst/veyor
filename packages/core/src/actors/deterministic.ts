@@ -19,7 +19,6 @@ export function deterministic<A extends Actor.Any>(
 ): Actor.ImplementationOf<A> {
   return {
     ...actor,
-    aggregate: () => Promise.resolve(),
     // @effect-diagnostics-next-line asyncFunction:off
     async run(task) {
       const raw = await run(task);

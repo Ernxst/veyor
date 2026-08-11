@@ -21,7 +21,6 @@ const Worker = actor("worker", {
   context: plainSchema<{ objective: string }>(),
   input: Empty,
   output: plainSchema<{ outcome: "completed" }>(),
-  aggregate: Empty,
 });
 
 test("rejects a model worker whose output contract cannot be supplied to Effect AI", () => {
