@@ -2,6 +2,7 @@ import type { Machine } from "@veyorhq/core";
 import { Console, Effect, Option, type Cause, type Result } from "effect";
 import { Command, Flag } from "effect/unstable/cli";
 import { blueprintOf, soleSeededName, type Assembly, type VeyorConfig } from "../config.ts";
+import { kindAt, propertyNames, type Kind } from "../jsonschema.ts";
 import { buildArgs, type BuiltArg } from "../lift.ts";
 import { decodeContext, errorMessage, resolveAssembly, usageFail } from "./common.ts";
 
@@ -11,6 +12,10 @@ export function makeSimulate(config: VeyorConfig) {
     target: "draft-2020-12",
   });
   const built = buildArgs(config, jsonSchema);
+  const numericFields = propertyNames(jsonSchema).filter((name) =>
+    isNumericKind(kindAt(jsonSchema, [name]))
+  );
+  const setup: SimulateSetup = { config, machine, built, numericFields };
 
   return Command.make(
     "simulate",
@@ -33,20 +38,27 @@ export function makeSimulate(config: VeyorConfig) {
         Flag.withDefault(0)
       ),
     },
-    (input) => handler(config, machine, built, input)
+    (input) => handler(setup, input)
   ).pipe(Command.withDescription("Run the factory many times and tally where it lands"));
+}
+
+function isNumericKind(kind: Kind): boolean {
+  return kind === "number" || kind === "integer";
+}
+
+interface SimulateSetup {
+  readonly config: VeyorConfig;
+  readonly machine: Machine.Any;
+  readonly built: readonly BuiltArg[];
+  readonly numericFields: readonly string[];
 }
 
 interface SimulateInput {
   readonly [key: string]: Option.Option<unknown> | number;
 }
 
-function handler(
-  config: VeyorConfig,
-  machine: Machine.Any,
-  built: readonly BuiltArg[],
-  input: SimulateInput
-): Effect.Effect<void> {
+function handler(setup: SimulateSetup, input: SimulateInput): Effect.Effect<void> {
+  const { config, machine, built, numericFields } = setup;
   return Effect.gen(function* () {
     // Defaulting to run's assembly would fire real workers; the seeded one is the
     // only safe implicit choice, and only when it is unambiguous.
@@ -75,7 +87,7 @@ function handler(
         )
     );
 
-    const summary = summarize(resolved.name, runs, outcomes);
+    const summary = summarize(resolved.name, runs, outcomes, numericFields);
     // @effect-diagnostics-next-line preferSchemaOverJson:off -- untyped boundary output, pretty-printed
     yield* Console.log(JSON.stringify(summary, null, 2));
   });
@@ -83,10 +95,17 @@ function handler(
 
 type RunOutcome = Result.Result<Machine.Result<unknown, string>, Cause.UnknownError>;
 
-function summarize(assembly: string, runs: number, outcomes: readonly RunOutcome[]) {
+function summarize(
+  assembly: string,
+  runs: number,
+  outcomes: readonly RunOutcome[],
+  numericFields: readonly string[]
+) {
   const sinks = new Map<string, number>();
   const failures = new Map<string, number>();
   for (const outcome of outcomes) tally(outcome, sinks, failures);
+
+  const context = summarizeContext(outcomes, numericFields);
 
   return {
     assembly,
@@ -95,6 +114,66 @@ function summarize(assembly: string, runs: number, outcomes: readonly RunOutcome
       [...sinks].map(([task, count]) => [task, { count, share: share(count, runs) }])
     ),
     failures: Object.fromEntries(failures),
+    ...(context === undefined ? {} : { context }),
+  };
+}
+
+interface FieldStats {
+  readonly mean: number;
+  readonly min: number;
+  readonly max: number;
+}
+
+/** Mean/min/max per numeric context field across successful runs, omitting empty fields. */
+function summarizeContext(
+  outcomes: readonly RunOutcome[],
+  numericFields: readonly string[]
+): Record<string, FieldStats> | undefined {
+  if (numericFields.length === 0) return undefined;
+
+  const values = new Map<string, number[]>(numericFields.map((field) => [field, []]));
+  for (const outcome of outcomes) collectContextValues(outcome, numericFields, values);
+
+  const stats = Object.fromEntries(
+    [...values].flatMap(([field, samples]) => {
+      const fieldStats = statsOf(samples);
+      return fieldStats === undefined ? [] : [[field, fieldStats]];
+    })
+  );
+
+  return Object.keys(stats).length === 0 ? undefined : stats;
+}
+
+function collectContextValues(
+  outcome: RunOutcome,
+  numericFields: readonly string[],
+  values: Map<string, number[]>
+): void {
+  const record = contextRecordOf(outcome);
+  if (record === undefined) return;
+  for (const field of numericFields) pushNumeric(values, field, record[field]);
+}
+
+function contextRecordOf(outcome: RunOutcome): Readonly<Record<string, unknown>> | undefined {
+  if (outcome._tag !== "Success") return undefined;
+  return isRecord(outcome.success.context) ? outcome.success.context : undefined;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
+}
+
+function pushNumeric(values: Map<string, number[]>, field: string, value: unknown): void {
+  if (typeof value === "number" && Number.isFinite(value)) values.get(field)?.push(value);
+}
+
+function statsOf(samples: readonly number[]): FieldStats | undefined {
+  if (samples.length === 0) return undefined;
+  const sum = samples.reduce((total, value) => total + value, 0);
+  return {
+    mean: Math.round((sum / samples.length) * 1000) / 1000,
+    min: Math.min(...samples),
+    max: Math.max(...samples),
   };
 }
 

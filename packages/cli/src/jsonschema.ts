@@ -45,6 +45,26 @@ function dereference(ref: string, root: unknown): unknown {
   return target;
 }
 
+/** The root's top-level property names, following `$ref` and branch combinators. */
+export function propertyNames(root: unknown): readonly string[] {
+  return collectPropertyNames(resolve(root, root), root);
+}
+
+function collectPropertyNames(node: unknown, root: unknown, depth = 0): readonly string[] {
+  if (depth > 16 || !isNode(node)) return [];
+  const own = isNode(node.properties) ? Object.keys(node.properties) : [];
+  const branch = ["anyOf", "oneOf", "allOf"].flatMap((combinator) =>
+    branchPropertyNames(node[combinator], root, depth)
+  );
+
+  return [...new Set([...own, ...branch])];
+}
+
+function branchPropertyNames(branches: unknown, root: unknown, depth: number): readonly string[] {
+  if (!isUnknownArray(branches)) return [];
+  return branches.flatMap((branch) => collectPropertyNames(resolve(branch, root), root, depth + 1));
+}
+
 function propertyOf(node: unknown, segment: string, root: unknown): unknown {
   if (!isNode(node)) return undefined;
   return ownProperty(node, segment) ?? branchProperty(node, segment, root);

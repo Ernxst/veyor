@@ -23,7 +23,16 @@ export interface BuiltArg {
 }
 
 /** Flags every `run`/`simulate` command defines itself. */
-const RESERVED = new Set(["assembly", "context", "seed", "json", "runs"]);
+const RESERVED = new Set([
+  "assembly",
+  "context",
+  "seed",
+  "json",
+  "quiet",
+  "runs",
+  "record",
+  "resume",
+]);
 
 /**
  * Compiles the config's arg specs against the machine's JSON Schema:
