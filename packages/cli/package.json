@@ -57,14 +57,14 @@
     "---------------------------------------------------------------------------------": ""
   },
   "dependencies": {
-    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+    "@effect/platform-node": "4.0.0-beta.103",
     "@standard-schema/spec": "1.1.0",
     "@veyorhq/core": "workspace:*",
-    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+    "effect": "4.0.0-beta.103"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
-    "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+    "@effect/vitest": "4.0.0-beta.103",
     "@types/node": "26.1.2",
     "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",
@@ -73,8 +73,8 @@
     "vitest": "4.1.10"
   },
   "peerDependencies": {
-    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+    "@effect/platform-node": "4.0.0-beta.103",
+    "effect": "4.0.0-beta.103"
   },
   "peerDependenciesMeta": {
     "@effect/platform-node": {

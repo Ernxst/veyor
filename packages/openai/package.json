@@ -54,16 +54,16 @@
     "---------------------------------------------------------------------------------": ""
   },
   "dependencies": {
-    "@effect/ai-openai": ">=4.0.0-beta.103 || >=4.0.0",
-    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+    "@effect/ai-openai": "4.0.0-beta.103",
+    "@effect/platform-node": "4.0.0-beta.103",
     "@standard-schema/spec": "1.1.0",
     "@veyorhq/ai-effect": "workspace:*",
     "@veyorhq/core": "workspace:*",
-    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+    "effect": "4.0.0-beta.103"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
-    "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+    "@effect/vitest": "4.0.0-beta.103",
     "@veyorhq/tsconfig": "workspace:*",
     "publint": "0.3.22",
     "tsdown": "0.22.14",
@@ -71,9 +71,9 @@
     "vitest": "4.1.10"
   },
   "peerDependencies": {
-    "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+    "@effect/platform-node": "4.0.0-beta.103",
     "@veyorhq/core": "^0.0.0",
-    "effect": ">=4.0.0-beta.103 || >=4.0.0"
+    "effect": "4.0.0-beta.103"
   },
   "peerDependenciesMeta": {
     "@veyorhq/core": {

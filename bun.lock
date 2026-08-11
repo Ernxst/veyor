@@ -46,14 +46,14 @@
     },
     "packages/ai-effect": {
       "name": "@veyorhq/ai-effect",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@veyorhq/core": "workspace:*",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
-        "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/vitest": "4.0.0-beta.103",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -61,9 +61,9 @@
         "vitest": "4.1.10",
       },
       "peerDependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@veyorhq/core": "^0.0.0",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "optionalPeers": [
         "@effect/platform-node",
@@ -71,18 +71,18 @@
     },
     "packages/anthropic": {
       "name": "@veyorhq/anthropic",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
-        "@effect/ai-anthropic": ">=4.0.0-beta.103 || >=4.0.0",
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/ai-anthropic": "4.0.0-beta.107",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@standard-schema/spec": "1.1.0",
         "@veyorhq/ai-effect": "workspace:*",
         "@veyorhq/core": "workspace:*",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
-        "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/vitest": "4.0.0-beta.103",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -90,9 +90,9 @@
         "vitest": "4.1.10",
       },
       "peerDependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@veyorhq/core": "^0.0.0",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "optionalPeers": [
         "@effect/platform-node",
@@ -100,19 +100,19 @@
     },
     "packages/cli": {
       "name": "@veyorhq/cli",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "bin": {
         "veyor": "./dist/cli.mjs",
       },
       "dependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@standard-schema/spec": "1.1.0",
         "@veyorhq/core": "workspace:*",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
-        "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/vitest": "4.0.0-beta.103",
         "@types/node": "26.1.2",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
@@ -121,18 +121,18 @@
         "vitest": "4.1.10",
       },
       "peerDependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
+        "effect": "4.0.0-beta.103",
       },
     },
     "packages/core": {
       "name": "@veyorhq/core",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@sinclair/typebox": "0.34.52",
         "@standard-schema/spec": "1.1.0",
         "@valibot/to-json-schema": "1.7.1",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
         "json-schema-faker": "0.6.3",
         "valibot": "1.4.2",
         "xstate": "6.0.0-alpha.27",
@@ -151,18 +151,18 @@
     },
     "packages/openai": {
       "name": "@veyorhq/openai",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
-        "@effect/ai-openai": ">=4.0.0-beta.103 || >=4.0.0",
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/ai-openai": "4.0.0-beta.103",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@standard-schema/spec": "1.1.0",
         "@veyorhq/ai-effect": "workspace:*",
         "@veyorhq/core": "workspace:*",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
-        "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/vitest": "4.0.0-beta.103",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -170,9 +170,9 @@
         "vitest": "4.1.10",
       },
       "peerDependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@veyorhq/core": "^0.0.0",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "optionalPeers": [
         "@effect/platform-node",
@@ -180,16 +180,16 @@
     },
     "packages/opencode": {
       "name": "@veyorhq/opencode",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@standard-schema/spec": "1.1.0",
         "@veyorhq/core": "workspace:*",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "devDependencies": {
         "@arethetypeswrong/core": "0.18.5",
-        "@effect/vitest": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/vitest": "4.0.0-beta.103",
         "@veyorhq/tsconfig": "workspace:*",
         "publint": "0.3.22",
         "tsdown": "0.22.14",
@@ -197,9 +197,9 @@
         "vitest": "4.1.10",
       },
       "peerDependencies": {
-        "@effect/platform-node": ">=4.0.0-beta.103 || >=4.0.0",
+        "@effect/platform-node": "4.0.0-beta.103",
         "@veyorhq/core": "^0.0.0",
-        "effect": ">=4.0.0-beta.103 || >=4.0.0",
+        "effect": "4.0.0-beta.103",
       },
       "optionalPeers": [
         "@effect/platform-node",
