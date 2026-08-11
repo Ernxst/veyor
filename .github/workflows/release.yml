@@ -55,6 +55,9 @@ jobs:
       - name: Publish to npm
         run: |
           bun .github/scripts/prepare-publish.ts
+          # The root devEngines pins bun for development; it must not gate
+          # npm-driven publishing. Transient, like the workspace rewrite.
+          node -e 'const fs=require("fs");const j=JSON.parse(fs.readFileSync("package.json","utf8"));delete j.devEngines;fs.writeFileSync("package.json",JSON.stringify(j,null,2))'
           echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > "$HOME/.npmrc"
           for pkg in core cli ai-effect anthropic openai opencode; do
             (cd "packages/$pkg" && npm publish --access public)
