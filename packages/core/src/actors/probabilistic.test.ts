@@ -72,4 +72,78 @@ describe("probabilistic", () => {
       'Probabilistic actor "review" failed as configured.'
     );
   });
+
+  it("derives failure rate from success rate when no explicit failure rate is supplied", async () => {
+    const review = probabilistic(Review, { seed: 1, successRate: 0 });
+
+    await expect(review.run(taskInput(false))).rejects.toThrow(
+      'Probabilistic actor "review" failed as configured.'
+    );
+  });
+
+  it("gives an explicit failure rate precedence over success rate", async () => {
+    const review = probabilistic(Review, {
+      seed: 1,
+      failureRate: 0,
+      successRate: 0,
+      outcomes: { approved: 1 },
+    });
+
+    await expect(review.run(taskInput(false))).resolves.toHaveProperty("outcome", "approved");
+  });
+
+  it("rejects a configured outcome that the actor cannot emit", async () => {
+    const review = probabilistic(Review, { seed: 1, outcomes: { unknown: 1 } });
+
+    await expect(review.run(taskInput(false))).rejects.toThrow(
+      'No branch of this output schema produces the outcome "unknown".'
+    );
+  });
+
+  it("rejects an empty outcome distribution", async () => {
+    const noOutcomes = probabilistic(Review, { seed: 1, outcomes: {} });
+
+    await expect(noOutcomes.run(taskInput(false))).rejects.toThrow(
+      "Provide at least one probabilistic outcome."
+    );
+  });
+
+  it("requires an outcome distribution to contain a positive, finite weight", async () => {
+    const zeroWeight = probabilistic(Review, {
+      seed: 1,
+      outcomes: { approved: 0, changesRequested: 0 },
+    });
+
+    await expect(zeroWeight.run(taskInput(false))).rejects.toThrow(
+      "Provide at least one probabilistic outcome with a positive, finite weight."
+    );
+  });
+
+  it("rejects negative outcome weights", async () => {
+    const negativeWeight = probabilistic(Review, {
+      seed: 1,
+      outcomes: { approved: 1, changesRequested: -1 },
+    });
+
+    await expect(negativeWeight.run(taskInput(false))).rejects.toThrow(
+      "Probabilistic outcome weights must be finite and non-negative."
+    );
+  });
+
+  it("rejects non-finite outcome weights", async () => {
+    const infiniteWeight = probabilistic(Review, { seed: 1, outcomes: { approved: Infinity } });
+
+    await expect(infiniteWeight.run(taskInput(false))).rejects.toThrow(
+      "Probabilistic outcome weights must be finite and non-negative."
+    );
+  });
+
+  it("rejects probability rates outside the inclusive zero-to-one range", () => {
+    expect(() => probabilistic(Review, { failureRate: -0.01 })).toThrow(
+      "Probabilistic failureRate must be a finite number between 0 and 1."
+    );
+    expect(() => probabilistic(Review, { successRate: 1.01 })).toThrow(
+      "Probabilistic successRate must be a finite number between 0 and 1."
+    );
+  });
 });

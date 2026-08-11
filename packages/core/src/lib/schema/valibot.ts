@@ -3,10 +3,15 @@ import { toStandardJsonSchema } from "@valibot/to-json-schema";
 import type * as v from "valibot";
 
 export function isValibotSchema(schema: unknown): schema is v.AnySchema {
-  if (schema === null || typeof schema !== "object") return false;
-  return "vendor" in schema && schema.vendor === "valibot";
+  if (!isRecord(schema) || !("~standard" in schema)) return false;
+  const standard = schema["~standard"];
+  return isRecord(standard) && "vendor" in standard && standard.vendor === "valibot";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 export function valibot<S extends v.AnySchema>(schema: S): StandardJSONSchemaV1 {
-  return Object.assign(schema, toStandardJsonSchema(schema));
+  return toStandardJsonSchema(schema);
 }

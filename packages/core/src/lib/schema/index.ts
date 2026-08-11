@@ -5,7 +5,8 @@ import { isValibotSchema, valibot } from "./valibot.ts";
 export type VeyorSchema<I = unknown, O = I> = StandardSchemaV1<I, O> & StandardJSONSchemaV1<I, O>;
 
 function hasJsonSchema(schema: StandardSchemaV1): schema is VeyorSchema {
-  return "jsonSchema" in schema["~standard"];
+  const standard: unknown = schema["~standard"];
+  return typeof standard === "object" && standard !== null && "jsonSchema" in standard;
 }
 
 /**

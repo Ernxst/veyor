@@ -23,6 +23,9 @@ export function probabilistic<A extends Actor.Any>(
   actor: A,
   options: ProbabilisticOptions<A> = {}
 ): Actor.ImplementationOf<A> {
+  validateRate(options.successRate, "successRate");
+  validateRate(options.failureRate, "failureRate");
+
   const rand = options.seed !== undefined ? mulberry32(options.seed) : Math.random;
   const output = actor.contract.Output;
   const json = output["~standard"].jsonSchema.output({ target: "draft-2020-12" });
@@ -38,6 +41,12 @@ export function probabilistic<A extends Actor.Any>(
       return await validate(output, raw, "probabilistic output", actor.name);
     },
   };
+}
+
+function validateRate(rate: number | undefined, name: "successRate" | "failureRate"): void {
+  if (rate === undefined) return;
+  if (Number.isFinite(rate) && rate >= 0 && rate <= 1) return;
+  throw new Error(`Probabilistic ${name} must be a finite number between 0 and 1.`);
 }
 
 function maybeFail(failureRate: number | undefined, rand: () => number, actorName: string): void {
@@ -129,10 +138,9 @@ function mulberry32(seed: number): () => number {
 
 function pickWeighted(outcomes: OutcomeWeights, rand: () => number): string {
   const entries = Object.entries(outcomes);
-  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  const total = validatedTotal(entries);
 
   let roll = rand() * total;
-
   for (const [key, weight] of entries) {
     roll -= weight;
     if (roll <= 0) return key;
@@ -141,4 +149,19 @@ function pickWeighted(outcomes: OutcomeWeights, rand: () => number): string {
   const last = entries.at(-1);
   if (last === undefined) throw new Error("Provide at least one probabilistic outcome.");
   return last[0];
+}
+
+/** Weights must be finite and non-negative, and must sum to something positive. */
+function validatedTotal(entries: readonly [string, number][]): number {
+  if (entries.length === 0) throw new Error("Provide at least one probabilistic outcome.");
+  if (entries.some(([, weight]) => !Number.isFinite(weight) || weight < 0)) {
+    throw new Error("Probabilistic outcome weights must be finite and non-negative.");
+  }
+
+  const total = entries.reduce((sum, [, weight]) => sum + weight, 0);
+  if (!Number.isFinite(total) || total <= 0) {
+    throw new Error("Provide at least one probabilistic outcome with a positive, finite weight.");
+  }
+
+  return total;
 }
