@@ -1,4 +1,5 @@
 import { schema } from "@forge/core/schema/effect";
+import { Effect } from "effect";
 import * as Schema from "effect/Schema";
 
 const Risk = Schema.Literals(["critical", "high", "medium", "low"]);
@@ -23,7 +24,9 @@ const PlannedItem = Schema.Struct({
 /** A planned item once it is on the backlog, tracking delivery state. */
 const Item = Schema.Struct({
   ...PlannedItem.fields,
-  status: Schema.Literals(["pending", "integrated", "deferred"]),
+  status: Schema.Literals(["pending", "integrated", "deferred"]).pipe(
+    Schema.withDecodingDefaultKey(Effect.succeed("pending"))
+  ),
 });
 
 const ReviewHistory = Schema.Array(
@@ -31,7 +34,7 @@ const ReviewHistory = Schema.Array(
     itemId: Schema.String,
     outcome: Schema.Literals(["approved", "changesRequested"]),
     notes: Schema.String,
-    attempt: Schema.Number,
+    attempt: Schema.Finite,
   })
 );
 
@@ -42,28 +45,28 @@ const Decisions = Schema.Array(Schema.Struct({ question: Schema.String, answer: 
 const ContextStruct = Schema.Struct({
   input: Schema.Struct({
     prompt: Schema.String,
-    files: Schema.Array(ArtifactReference),
+    files: Schema.Array(ArtifactReference).pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
   }),
-  backlog: Schema.Array(Item),
-  planVersion: Schema.Number,
+  backlog: Schema.Array(Item).pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
+  planVersion: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
   /** The item currently on the line, when one is in flight. */
   current: Schema.optional(Schema.String),
   /** Refine cycles consumed by the current item. */
-  attempts: Schema.Number,
+  attempts: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
   /** Risk points integrated since the last verification. */
-  unverifiedRisk: Schema.Number,
+  unverifiedRisk: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
   /** Model-grade spend consumed by the current item. */
-  itemSpend: Schema.Number,
+  itemSpend: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
   /** Whether the current item has already been re-implemented from scratch. */
-  reworked: Schema.Boolean,
+  reworked: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
   /** Outstanding review findings against the current item. */
-  findings: Schema.Array(Schema.String),
+  findings: Schema.Array(Schema.String).pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
   /** A question raised by a blocked worker, awaiting the user. */
   pendingQuestion: Schema.optional(Schema.String),
-  spend: Schema.Number,
-  spendBudget: Schema.Number,
-  decisions: Decisions,
-  reviewHistory: ReviewHistory,
+  spend: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
+  spendBudget: Schema.Finite.pipe(Schema.withDecodingDefaultKey(Effect.succeed(25))),
+  decisions: Decisions.pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
+  reviewHistory: ReviewHistory.pipe(Schema.withDecodingDefaultKey(Effect.succeed([]))),
 });
 
 export type Context = Schema.Schema.Type<typeof ContextStruct>;
@@ -76,7 +79,7 @@ export type ReviewOutput = Schema.Schema.Type<typeof ReviewOutput>;
 export type AcceptanceRequest = Schema.Schema.Type<typeof AcceptanceRequest>;
 export type AcceptanceOutput = Schema.Schema.Type<typeof AcceptanceOutput>;
 
-export const TaskAggregate = Schema.Struct({ attempts: Schema.Number });
+export const TaskAggregate = Schema.Struct({ attempts: Schema.Finite });
 
 // --- Task contracts ----------------------------------------------------------
 
@@ -183,9 +186,9 @@ export const TriageRequest = Schema.Struct({
   findings: Schema.Array(Schema.String),
   reviewHistory: ReviewHistory,
   decisions: Decisions,
-  planVersion: Schema.Number,
-  spend: Schema.Number,
-  spendBudget: Schema.Number,
+  planVersion: Schema.Finite,
+  spend: Schema.Finite,
+  spendBudget: Schema.Finite,
 });
 
 export const TriageOutput = Schema.Union([

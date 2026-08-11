@@ -5,9 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "deliver": "bun scripts/deliver.ts",
-    "forge": "forge run",
-    "simulate": "bun scripts/probabilistic.ts",
+    "forge": "forge",
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
