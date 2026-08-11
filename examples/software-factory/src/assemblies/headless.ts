@@ -1,7 +1,7 @@
 import { assemble } from "@forge/core";
 import { deterministic } from "@forge/core/actors";
 import * as actors from "../actors.ts";
-import { DeliveryBlueprint } from "../machine.ts";
+import { DeliveryBlueprint } from "../blueprint.ts";
 import { workers } from "./llm.ts";
 
 /**

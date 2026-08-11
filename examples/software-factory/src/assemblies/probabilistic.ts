@@ -1,7 +1,7 @@
 import { assemble } from "@forge/core";
 import { deterministic, probabilistic, type OutcomeWeights } from "@forge/core/actors";
 import * as actors from "../actors.ts";
-import { DeliveryBlueprint } from "../machine.ts";
+import { DeliveryBlueprint } from "../blueprint.ts";
 import type * as Schema from "../schema.ts";
 import * as policy from "./policy.ts";
 

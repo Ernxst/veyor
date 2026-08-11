@@ -13,7 +13,7 @@
     "./examples/*": {
       // forge.config.ts is loaded at runtime by the forge CLI via a dynamic
       // import, which knip cannot trace.
-      "entry": ["forge.config.ts", "src/factories/*"],
+      "entry": ["forge.config.ts", "src/assemblies/*"],
     },
   },
 }

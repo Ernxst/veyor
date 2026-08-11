@@ -1,4 +1,4 @@
-import llmFactory from "./factories/llm.ts";
-import monteCarloFactory from "./factories/probabilistic.ts";
+import llmFactory from "./assemblies/llm.ts";
+import monteCarloFactory from "./assemblies/probabilistic.ts";
 
 export { llmFactory, monteCarloFactory };

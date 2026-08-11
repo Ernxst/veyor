@@ -3,7 +3,7 @@ import { assemble } from "@forge/core";
 import { acceptance, deterministic, prompt, question, review } from "@forge/core/actors";
 import { codex } from "@forge/openai/codex";
 import * as actors from "../actors.ts";
-import { DeliveryBlueprint } from "../machine.ts";
+import { DeliveryBlueprint } from "../blueprint.ts";
 import * as policy from "./policy.ts";
 
 const implementerInstructions = `

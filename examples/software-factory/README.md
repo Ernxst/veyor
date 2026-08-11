@@ -7,7 +7,7 @@ This example models an autonomous software **delivery** factory with Forge: one 
 
 ## The shape: an assembly line, not a dispatch hub
 
-The blueprint in [`src/machine.ts`](./src/machine.ts) is an assembly line over a planned backlog. Work flows through a fixed per-item pipeline; exceptions drain into a triage funnel; humans sit at explicit authority boundaries.
+The blueprint in [`src/blueprint.ts`](./src/blueprint.ts) is an assembly line over a planned backlog. Work flows through a fixed per-item pipeline; exceptions drain into a triage funnel; humans sit at explicit authority boundaries.
 
 ```mermaid
 stateDiagram-v2
@@ -59,7 +59,7 @@ stateDiagram-v2
 
 The design rests on a handful of commitments:
 
-- **LLM judgment is spent only where judgment exists.** Planning, implementing, reviewing, refining, verifying, and triage are model calls. Scheduling (`select`) and integration are deterministic policy in [`src/factories/policy.ts`](./src/factories/policy.ts) — picking the next ready backlog item is not a judgment call, so no tokens are spent on it.
+- **LLM judgment is spent only where judgment exists.** Planning, implementing, reviewing, refining, verifying, and triage are model calls. Scheduling (`select`) and integration are deterministic policy in [`src/assemblies/policy.ts`](./src/assemblies/policy.ts) — picking the next ready backlog item is not a judgment call, so no tokens are spent on it.
 - **Quality is a property of the graph; its cost scales with the stakes.** Review is unconditional after every implementation — no scheduler can skip it — but the reviewer tiers: trivial low-risk items get the deterministic quality gate (free), standard items a light model, high-risk items an adversarial cross-vendor review.
 - **Loops are bounded by the machine.** The refine loop carries a guard (`attempts < 3`); its exhaustion is not an error but _evidence_, routed to triage. Endless review is unrepresentable.
 - **Policy lives on edges, not stations.** The spend budget is a guarded transition out of `select` with a human fallback, not a task on the line. Stall detection dissolved into the refine bound entirely.
@@ -88,7 +88,7 @@ The design rests on a handful of commitments:
 
 ### Probabilistic assembly
 
-[`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) runs the line against a fixed six-item backlog (a dependency chain of mixed complexity and risk) with seeded probabilistic workers. Reviews model correlated failure — each refine attempt raises the odds of another rejection — so the bounded refine loop has something real to bound. Deterministic policy owns scheduling and integration for both assemblies.
+[`src/assemblies/probabilistic.ts`](./src/assemblies/probabilistic.ts) runs the line against a fixed six-item backlog (a dependency chain of mixed complexity and risk) with seeded probabilistic workers. Reviews model correlated failure — each refine attempt raises the odds of another rejection — so the bounded refine loop has something real to bound. Deterministic policy owns scheduling and integration for both assemblies.
 
 Run the Monte Carlo:
 
@@ -100,7 +100,7 @@ At 10,000 seeded runs with a budget of 25 model-grade work units — including a
 
 ### LLM assembly
 
-[`src/factories/llm.ts`](./src/factories/llm.ts) assigns Codex models to planning, implementation (an escalation ladder by item complexity and retry count), refinement, verification, and triage; Claude Code reviews — independent evaluation deliberately runs on a different vendor than the implementers so it does not share their blind spots. Deterministic policy keeps scheduling and integration; terminal prompts keep questions, funding, and acceptance with the user.
+[`src/assemblies/llm.ts`](./src/assemblies/llm.ts) assigns Codex models to planning, implementation (an escalation ladder by item complexity and retry count), refinement, verification, and triage; Claude Code reviews — independent evaluation deliberately runs on a different vendor than the implementers so it does not share their blind spots. Deterministic policy keeps scheduling and integration; terminal prompts keep questions, funding, and acceptance with the user.
 
 Both assemblies satisfy the same actor contracts and assemble the same `DeliveryBlueprint`.
 
@@ -118,7 +118,7 @@ bun run forge run "Ship the typed workflow runner" --budget 25 --assembly headle
 
 The command line is declared, not implemented: [`forge.config.ts`](./forge.config.ts) names the assemblies and maps `<task>`, `--budget`, `--backlog`, and `--decisions` onto context paths; the `forge` CLI reads each flag's type from the context schema and decodes the whole thing through it, so schema defaults fill every field the caller doesn't supply.
 
-The headless assembly ([`src/factories/headless.ts`](./src/factories/headless.ts)) swaps the terminal prompts for policy: questions receive a standing conservative answer, budget exhaustion defers the sick item instead of asking for more money, and a verified delivery self-accepts. The run prints its final context as JSON — backlog states, spend, the decision log, the review history — and exits nonzero unless it ended `done`.
+The headless assembly ([`src/assemblies/headless.ts`](./src/assemblies/headless.ts)) swaps the terminal prompts for policy: questions receive a standing conservative answer, budget exhaustion defers the sick item instead of asking for more money, and a verified delivery self-accepts. The run prints its final context as JSON — backlog states, spend, the decision log, the review history — and exits nonzero unless it ended `done`.
 
 An agent caller's loop is stateless re-runs: supply the decomposition via `--backlog` (adopted for free), read the result, answer whatever surfaced in `deferred` and the decision log, and re-run with `--decisions` pre-seeded. The re-run loop is the conversation — no IPC, no session state.
 
@@ -130,10 +130,10 @@ Start in this order:
 
 1. [`src/schema.ts`](./src/schema.ts) — the backlog model, ambient `blocked`/`contradiction` outcomes, and boundary contracts.
 2. [`src/actors.ts`](./src/actors.ts) — named capabilities and their typed inputs and outputs.
-3. [`src/machine.ts`](./src/machine.ts) — the line, its guards, and how updates fold evidence into context.
-4. [`src/factories/policy.ts`](./src/factories/policy.ts) — deterministic scheduling and integration.
-5. [`src/factories/probabilistic.ts`](./src/factories/probabilistic.ts) — the simulation assembly.
-6. [`src/factories/llm.ts`](./src/factories/llm.ts) — Codex, Claude Code, deterministic, and human implementations.
+3. [`src/blueprint.ts`](./src/blueprint.ts) — the line, its guards, and how updates fold evidence into context.
+4. [`src/assemblies/policy.ts`](./src/assemblies/policy.ts) — deterministic scheduling and integration.
+5. [`src/assemblies/probabilistic.ts`](./src/assemblies/probabilistic.ts) — the simulation assembly.
+6. [`src/assemblies/llm.ts`](./src/assemblies/llm.ts) — Codex, Claude Code, deterministic, and human implementations.
 7. [`forge.config.ts`](./forge.config.ts) — the command-line surface: assemblies, args, and examples.
 
 See the [`@forge/core` README](../../packages/core) for the library model and the [Forge README](../../README.md) for the project overview and prior work.

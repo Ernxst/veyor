@@ -1,8 +1,8 @@
 import { defineConfig } from "@forge/cli";
-import headless from "./src/factories/headless.ts";
-import llm from "./src/factories/llm.ts";
-import local from "./src/factories/local.ts";
-import probabilistic from "./src/factories/probabilistic.ts";
+import headless from "./src/assemblies/headless.ts";
+import llm from "./src/assemblies/llm.ts";
+import local from "./src/assemblies/local.ts";
+import probabilistic from "./src/assemblies/probabilistic.ts";
 
 export default defineConfig({
   name: "software-factory",

@@ -34,6 +34,34 @@ An arg spec is purely presentational — where the value lands (`key`, a dot pat
 
 This requires the machine's context schema to be JSON-Schema-capable. Natively Standard-Schema-compatible libraries (valibot, typebox) can be passed to `machine()` raw — they are upgraded on construction; Effect schemas come through `schema()` from `@forge/core/schema/effect`.
 
+## Project structure
+
+One prescribed shape. The dependency spine of a factory — contracts, then roles over the contracts, then the blueprint over the roles, then assemblies binding workers to roles, then the CLI surface — **is** the file layout, one concept per place:
+
+```
+forge.config.ts        # the CLI surface — the only file forge reads
+src/
+  schema.ts            # contracts: the context and every station's input/output
+  actors.ts            # roles: named capabilities over those contracts
+  blueprint.ts         # the machine: stations, routing, guards, policy constants
+  assemblies/
+    policy.ts          # deterministic workers shared across assemblies (named exports)
+    llm.ts             # one file per assembly; default export = assemble(blueprint, ...workers)
+    headless.ts
+    probabilistic.ts   # the seeded simulation assembly
+```
+
+Each file imports only from the files above it; if an import points the other way, something is in the wrong place. Pure domain helpers live beside the blueprint (`src/backlog.ts` in the example). Growth is by splitting in place, not by new top-level concepts: a large `schema.ts` becomes `src/schema/` with one file per station, a large `actors.ts` splits the same way — the spine does not change.
+
+In a **monorepo**, the factory is a workspace package — conventionally `factory/` at the repo root, with exactly the shape above inside it and the `@forge/*` and worker-adapter dependencies in its own `package.json`. `forge` reads `forge.config.ts` from the working directory, so runs happen in that package; give the root a forwarding script if you want to drive it from anywhere:
+
+```jsonc
+// root package.json
+"scripts": { "factory": "bun run --cwd factory forge" }
+```
+
+A factory that delivers the repository it lives in confines its workers to the repo root (the worker adapters take a directory), while the config, blueprint, and prompts stay isolated in `factory/` — the factory is tooling _about_ the repo, not part of its product surface.
+
 ## Commands
 
 ```sh
