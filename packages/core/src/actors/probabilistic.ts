@@ -1,5 +1,4 @@
 import { generate, type JsonSchema } from "json-schema-faker";
-import { getJsonSchema } from "../lib/schema/index.ts";
 import { validate } from "../lib/schema/validate.ts";
 import type { Actor } from "../modules/actor.ts";
 import type { Task } from "../modules/task.ts";
@@ -26,7 +25,7 @@ export function probabilistic<A extends Actor.Any>(
 ): Actor.ImplementationOf<A> {
   const rand = options.seed !== undefined ? mulberry32(options.seed) : Math.random;
   const output = actor.contract.Output;
-  const json = getJsonSchema(output)["~standard"].jsonSchema.output({ target: "draft-2020-12" });
+  const json = output["~standard"].jsonSchema.output({ target: "draft-2020-12" });
 
   return {
     ...actor,

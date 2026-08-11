@@ -1,4 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { getJsonSchema, type ForgeSchema } from "../lib/schema/index.ts";
 import { Kind, Meta } from "../lib/types.ts";
 import type { Actor } from "./actor.ts";
 import type { Task } from "./task.ts";
@@ -20,7 +21,7 @@ export interface Machine<
   readonly retries: number;
   readonly actors: Task.ActorsOf<Tasks>;
   readonly contract: {
-    readonly Context: StandardSchemaV1<unknown, Context> | undefined;
+    readonly Context: ForgeSchema<unknown, Context>;
   };
 }
 
@@ -37,7 +38,7 @@ export declare namespace Machine {
     readonly retries: number;
     readonly actors: readonly Actor.Any[];
     readonly contract: {
-      readonly Context: StandardSchemaV1 | undefined;
+      readonly Context: ForgeSchema;
     };
   }
 
@@ -53,7 +54,12 @@ export declare namespace Machine {
     readonly initial: Initial;
     readonly tasks: Tasks;
     readonly transitions: Transitions;
-    readonly context?: StandardSchemaV1<unknown, Context>;
+    /**
+     * The context contract. Must be JSON-Schema-capable: natively capable
+     * schemas and known vendors (valibot, typebox) are accepted raw and
+     * upgraded on construction; others come through a schema adapter.
+     */
+    readonly context: StandardSchemaV1<unknown, Context>;
     /** How many times a failed task invocation is retried before the run fails. */
     readonly retries?: number;
   }
@@ -133,6 +139,6 @@ export function machine<
     transitions: definition.transitions,
     retries: definition.retries ?? 2,
     actors: definition.tasks.flatMap((t) => t.assignments.map((a) => a.actor)),
-    contract: Object.freeze({ Context: definition.context }),
+    contract: Object.freeze({ Context: getJsonSchema(definition.context) }),
   } satisfies Machine<Context, Tasks, Initial, Transitions>);
 }

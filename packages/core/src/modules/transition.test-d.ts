@@ -6,12 +6,14 @@ import { schema } from "../lib/schema/effect.ts";
 const Empty = schema(Schema.Struct({}));
 
 const Worker = actor("worker", {
+  context: Empty,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literals(["completed", "changesRequested"]) })),
   aggregate: Empty,
 });
 
 const Reviewer = actor("reviewer", {
+  context: Empty,
   input: Empty,
   output: schema(Schema.Struct({ outcome: Schema.Literals(["approved", "rejected"]) })),
   aggregate: Empty,
@@ -42,6 +44,7 @@ test("accepts outcomes emitted by the source task", () => {
   const blueprint = machine({
     id: "typed-transitions",
     initial: "work",
+    context: Empty,
     tasks,
     transitions,
   });
@@ -54,6 +57,7 @@ test("rejects an outcome not emitted by the source task", () => {
     machine({
       id: "invalid-outcome",
       initial: "work",
+      context: Empty,
       tasks,
       transitions: [
         // @ts-expect-error -- "approved" is not an outcome of the work task.
@@ -68,6 +72,7 @@ test("rejects an unknown target task", () => {
     machine({
       id: "invalid-target",
       initial: "work",
+      context: Empty,
       tasks,
       transitions: [
         // @ts-expect-error -- "missing" is not a task in this machine.

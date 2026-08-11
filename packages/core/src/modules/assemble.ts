@@ -37,9 +37,7 @@ export function assemble<M extends Machine.Any, const Actors extends Actor.Assem
     // @effect-diagnostics-next-line asyncFunction:off
     async run(context, options) {
       const fsm = compile(machine, actors, options?.observer);
-      const contract = machine.contract.Context;
-      const input =
-        contract === undefined ? context : await validate(contract, context, "context", machine.id);
+      const input = await validate(machine.contract.Context, context, "context", machine.id);
 
       const running = createActor(fsm, { input });
 

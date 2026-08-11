@@ -1,4 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { getJsonSchema, type ForgeSchema } from "../lib/schema/index.ts";
 import { Kind, Meta } from "../lib/types.ts";
 import type { Machine } from "./machine.ts";
 import type { Task } from "./task.ts";
@@ -14,10 +15,10 @@ export interface Actor<
   readonly [Meta]: { Context: Context; Input: Input; Output: Output; Aggregate: Aggregate };
   readonly name: Name;
   readonly contract: {
-    readonly Context: StandardSchemaV1<unknown, Context> | undefined;
-    readonly Input: StandardSchemaV1<unknown, Input>;
-    readonly Output: StandardSchemaV1<unknown, Output>;
-    readonly Aggregate: StandardSchemaV1<unknown, Aggregate>;
+    readonly Context: ForgeSchema<unknown, Context> | undefined;
+    readonly Input: ForgeSchema<unknown, Input>;
+    readonly Output: ForgeSchema<unknown, Output>;
+    readonly Aggregate: ForgeSchema<unknown, Aggregate>;
   };
 }
 
@@ -88,10 +89,10 @@ export function actor<
     [Kind]: "Actor" as const,
     name,
     contract: Object.freeze({
-      Context: contract.context,
-      Input: contract.input,
-      Output: contract.output,
-      Aggregate: contract.aggregate,
+      Context: contract.context === undefined ? undefined : getJsonSchema(contract.context),
+      Input: getJsonSchema(contract.input),
+      Output: getJsonSchema(contract.output),
+      Aggregate: getJsonSchema(contract.aggregate),
     }),
   } satisfies Actor<Name, Context, Input, Output, Aggregate>);
 }
